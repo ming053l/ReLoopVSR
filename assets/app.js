@@ -102,7 +102,7 @@ function makeVideoCompare(host){
     var stop=function(sync){if(!anims)return;var t=anims[0].currentTime||0,p=anims.loop?at(t):null;if(p===null&&anims.from!==undefined){var k=Math.min(1,t/anims.d);k=k*k*(3-2*k);p=anims.from+(anims.to-anims.from)*k}
       anims.forEach(function(x){x.cancel()});anims=null;if(sync&&p!==null)slider.quiet(p)};
     var loop=function(t0){anims=run(fw,bw,{duration:T,iterations:Infinity});anims.forEach(function(x){x.currentTime=t0});anims.loop=true};
-    var start=function(){if(anims||REDUCED.matches||video.paused||performance.now()<holdUntil||document.activeElement===grip)return;
+    var start=function(){if(anims||REDUCED.matches||matchMedia('(max-width:800px)').matches||video.paused||performance.now()<holdUntil||document.activeElement===grip)return;
       var p=slider.get(),q=(p-50)/A;
       if(Math.abs(q)<=1){var t=Math.asin(q)*T/(2*Math.PI);loop(t<0?t+T:t);return}
       /* outside the sweep range: glide to the nearer end first, then continue the loop from there */
