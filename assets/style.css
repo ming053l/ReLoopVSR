@@ -279,3 +279,32 @@ footer .wrap{display:grid;gap:12px}
 .hero-stage .grip:not(:focus-visible){opacity:0}
 /* hero: while the whole frame shows one side, the other side's label fades out (app.js moveHero) */
 .hero-stage .htags .tag{transition:opacity .25s ease}.hero-stage.all-in .htags .tag.r,.hero-stage.all-out .htags .tag.l{opacity:0}
+
+/* language switcher (static links in a details menu; app.js keeps the #hash and closes it on Escape / outside click) */
+.lang{position:relative;flex:none}
+.lang>summary{list-style:none;display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:13.5px;font-weight:600;cursor:pointer;user-select:none;-webkit-user-select:none;white-space:nowrap}
+.lang>summary::-webkit-details-marker{display:none}.lang>summary:hover{background:var(--surface-2)}
+.lang>summary svg{width:17px;height:17px;flex:none}.lang>summary .chev{width:12px;height:12px;color:var(--muted);transition:transform .15s}.lang[open]>summary .chev{transform:rotate(180deg)}
+.lang-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:70;margin:0;padding:6px;list-style:none;min-width:176px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+.lang-menu a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:14px;white-space:nowrap}
+.lang-menu a b{display:inline-block;min-width:24px;font-weight:600;color:var(--muted)}
+.lang-menu a:hover{background:var(--surface-2)}
+.lang-menu a[aria-current=page]{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}.lang-menu a[aria-current=page] b{color:var(--accent-ink)}
+.lang-menu a[aria-current=page]::after{content:"";margin-left:auto;width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.lang-hint{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:80;display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;max-width:calc(100% - 32px);padding:9px 10px 9px 14px;border-radius:12px;background:var(--ink);color:var(--bg);font-size:14px;line-height:1.4;box-shadow:var(--shadow)}
+.lang-hint a{color:var(--bg);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.lang-x{display:grid;place-items:center;width:30px;height:30px;margin-left:auto;border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer}.lang-x:hover{background:rgb(255 255 255/.12)}
+.lang-x svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+@media (max-width:620px){.nav .lang{margin-left:auto}.nav .lang+.icon-btn{margin-left:0}.lang>summary{height:44px}.lang-menu a{padding:11px 12px}}
+
+/* CJK pages: system fonts only (no web-font download); Inter still renders Latin letters and digits */
+html:lang(zh-Hans) body,html:lang(zh-Hans) .sch-svg{font-family:"Inter","Inter fallback","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Noto Sans SC","Source Han Sans SC",system-ui,sans-serif}
+html:lang(zh-Hant) body,html:lang(zh-Hant) .sch-svg{font-family:"Inter","Inter fallback","PingFang TC","Microsoft JhengHei","Noto Sans CJK TC","Noto Sans TC","Source Han Sans TC",system-ui,sans-serif}
+html:lang(ja) body,html:lang(ja) .sch-svg{font-family:"Inter","Inter fallback","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI","Yu Gothic","Meiryo","Noto Sans CJK JP","Noto Sans JP",system-ui,sans-serif}
+html:lang(ko) body,html:lang(ko) .sch-svg{font-family:"Inter","Inter fallback","Apple SD Gothic Neo","Malgun Gothic","Noto Sans CJK KR","Noto Sans KR",system-ui,sans-serif}
+:is(html:lang(zh),html:lang(ja),html:lang(ko)) :is(h1,h2,h3,.hero-sub,.tcard b,.race-title,.sch-title){letter-spacing:0;line-height:1.4}
+:is(html:lang(zh),html:lang(ja),html:lang(ko)) .eyebrow{letter-spacing:.04em}
+:is(html:lang(zh),html:lang(ja),html:lang(ko)) .sch-tag{letter-spacing:.02em}
+:is(html:lang(zh),html:lang(ja)) body{line-break:strict;overflow-wrap:break-word}
+html:lang(ko) body{word-break:keep-all;overflow-wrap:break-word}
+:is(html:lang(zh),html:lang(ja),html:lang(ko)) :is(.head p,.lede,.fig-wrap figcaption,.feature li,.faq p){line-height:1.75}

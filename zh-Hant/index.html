@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ReLoopVSR：用於串流影片超解析度的一步循環自迴歸擴散精煉</title>
+<meta name="description" content="ReLoopVSR：用於串流影片超解析度的一步循環自迴歸擴散精煉。結果、方法、成本與基準測試。">
+<meta name="robots" content="noindex">
+<!--i18n-head-->
+<link rel="canonical" href="https://ming053l.github.io/ReLoopVSR/zh-Hant/">
+<link rel="alternate" hreflang="en" href="https://ming053l.github.io/ReLoopVSR/">
+<link rel="alternate" hreflang="zh-Hans" href="https://ming053l.github.io/ReLoopVSR/zh-Hans/">
+<link rel="alternate" hreflang="zh-Hant" href="https://ming053l.github.io/ReLoopVSR/zh-Hant/">
+<link rel="alternate" hreflang="ja" href="https://ming053l.github.io/ReLoopVSR/ja/">
+<link rel="alternate" hreflang="ko" href="https://ming053l.github.io/ReLoopVSR/ko/">
+<link rel="alternate" hreflang="x-default" href="https://ming053l.github.io/ReLoopVSR/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ReLoopVSR">
+<meta property="og:title" content="ReLoopVSR：用於串流影片超解析度的一步循環自迴歸擴散精煉">
+<meta property="og:description" content="ReLoopVSR：用於串流影片超解析度的一步循環自迴歸擴散精煉。結果、方法、成本與基準測試。">
+<meta property="og:url" content="https://ming053l.github.io/ReLoopVSR/zh-Hant/">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale:alternate" content="zh_CN">
+<meta property="og:locale:alternate" content="ja_JP">
+<meta property="og:locale:alternate" content="ko_KR">
+<!--/i18n-head-->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237CB696'/%3E%3Cpath d='M23 11a9 9 0 1 0 1.6 7' fill='none' stroke='%2327323c' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='m25 6-1 6.6-6.4-1.6' fill='none' stroke='%2327323c' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script>try{var t=localStorage.getItem('dv-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<link rel="stylesheet" href="../assets/style.css?v=20261118i18n">
+<link rel="stylesheet" href="../assets/schematic.css?v=20261110c">
+<style>#race-chips{grid-column:1/-1;grid-template-columns:repeat(5,minmax(0,1fr));margin-top:0}@media (max-width:760px){#race-chips{grid-template-columns:repeat(2,minmax(0,1fr))}}.rp.oom .rv{opacity:.55}.race-ctl .seg+.seg{margin-left:4px}.note.illus{font-size:12px;text-align:center;margin:6px auto 10px;max-width:none}#race-cap{margin-top:4px;font-size:13px;color:var(--ink-2)}.seg[data-g=res] button,.seg[data-g=k] button{width:auto;min-width:44px;padding:0 9px}</style>
+</head>
+<body>
+<a class="skip" href="#main">跳至主要內容</a>
+<header class="nav"><div class="wrap">
+  <a class="brand" translate="no" href="#top" aria-label="ReLoopVSR，回到頂端">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#7CB696"/><path d="M23 11a9 9 0 1 0 1.6 7" fill="none" stroke="#27323c" stroke-width="3" stroke-linecap="round"/><path d="m25 6-1 6.6-6.4-1.6" fill="none" stroke="#27323c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>ReLoop<b>VSR</b></span></a>
+  <nav class="links" aria-label="章節">
+    <a href="#results">結果</a><a href="#method">方法</a><a href="#fast">快速版</a><a href="#performance">效能</a><a href="#benchmarks">基準測試</a><a href="#temporal">時序</a><a href="#faq">常見問題</a><a href="#citation">引用</a>
+  </nav>
+  <!--i18n-switcher--><details class="lang" id="lang" translate="no"><summary aria-label="語言: 繁體中文" title="語言"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9M12 3c-2.5 2.6-3.8 5.6-3.8 9s1.3 6.4 3.8 9"/></svg><span>繁</span><svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg></summary><ul class="lang-menu"><li><a href="../" hreflang="en" lang="en"><b>EN</b>English</a></li><li><a href="../zh-Hans/" hreflang="zh-Hans" lang="zh-Hans"><b>简</b>简体中文</a></li><li><a href="../zh-Hant/" hreflang="zh-Hant" lang="zh-Hant" aria-current="page"><b>繁</b>繁體中文</a></li><li><a href="../ja/" hreflang="ja" lang="ja"><b>日</b>日本語</a></li><li><a href="../ko/" hreflang="ko" lang="ko"><b>한</b>한국어</a></li></ul></details><!--/i18n-switcher-->
+  <button class="icon-btn" id="theme" type="button" aria-label="切換主題">
+    <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z"/></svg>
+  </button>
+</div></header>
+<div id="tip" hidden></div>
+
+<main id="main">
+<div class="hero" id="top">
+  <div class="hero-view" data-clip="hero" data-desc="四段 Inter4K 片段（城市空拍、蜂巢狀樓梯與一朵玫瑰），左右分割為雙三次上取樣的輸入與 ReLoopVSR 的輸出"><img class="hero-poster" src="../media/poster/hero_split.webp?v=20261118r" width="1920" height="1080" alt="" fetchpriority="high" decoding="async"></div>
+  <div class="hero-fade" aria-hidden="true"></div>
+  <div class="hero-inner wrap"><div class="hero-text">
+    <h1 class="hero-title"><em>ReLoopVSR</em><span class="vh">：</span><span class="hero-sub">用於串流影片超解析度的<span class="nb">一步</span>循環自迴歸擴散精煉</span></h1>
+    <p class="authors" translate="no"><a href="https://ming053l.github.io/" target="_blank" rel="noopener">Chia-Ming Lee</a><sup>1,2</sup>, <a href="https://mingching.github.io/" target="_blank" rel="noopener">Ming-Ching Chang</a><sup>1</sup>, <a href="https://scholar.google.com/citations?user=gMBvzGoAAAAJ&amp;hl=en" target="_blank" rel="noopener">Xin Li</a><sup>1</sup>, <a href="https://yulunalexliu.github.io/" target="_blank" rel="noopener">Yu-Lun Liu</a><sup>2</sup>, <a href="https://cchsu.info/" target="_blank" rel="noopener">Chih-Chung Hsu</a><sup>2</sup></p>
+    <p class="affil" translate="no"><span><sup>1</sup>University at Albany, SUNY</span>&nbsp;&nbsp;&nbsp; <span><sup>2</sup>National Yang Ming Chiao Tung University</span></p>
+    <p class="lede">ReLoopVSR 在不使用未來幀的情況下還原影片串流，每幀只需一次去噪步驟。它將前一幀的還原結果對齊並重新加噪，再以目前的低解析度幀加以精煉，並在預測到誤差或場景切換時重新開始。它在感知品質上領先，記憶體用量與延遲則低得多；ReLoopVSR-fast 在 720p 下超過 240 FPS。</p>
+    <div class="btns">
+      <a class="btn btn-p" href="#results">查看結果</a>
+      <a class="btn btn-s" href="#benchmarks">查看數據</a>
+      <button class="btn" type="button" disabled>閱讀論文 <small>即將推出</small></button>
+    </div>
+  <div class="stats hero-stats" role="list" aria-label="關鍵實測數據">
+    <div role="listitem"><b>0 幀</b><span>未來幀依賴</span></div>
+    <div role="listitem"><b>0.04 s</b><span>首幀時間（半精度）</span></div>
+    <div role="listitem"><b>240+ FPS</b><span>ReLoopVSR-fast，720p</span></div>
+    <div role="listitem"><b>28+ FPS</b><span>ReLoopVSR-fast，4K</span></div>
+    <div role="listitem"><b>2.2 GiB</b><span>720p 峰值記憶體</span></div>
+  </div>
+  </div></div>
+  <div class="hero-cap"><button class="play" id="hero-play" type="button" aria-label="暫停此片段"><svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M2 1h3v10H2zM7 1h3v10H7z"/></svg><span>暫停</span></button><span id="hero-cap"><b>四段 Inter4K 片段</b> · 左：雙三次輸入 · 右：ReLoopVSR（×4）</span></div>
+  <a class="scroll-cue" href="#race" aria-label="捲動至速度競賽"><span></span></a>
+</div>
+<div class="hero-after"><div class="wrap">
+  <section class="race" id="race" aria-labelledby="race-h">
+    <div class="race-top">
+      <h2 id="race-h" class="race-title">相同的 100 幀、共用時鐘，720p 至 4K</h2>
+      <div class="clock"><span class="vh">實測經過時間：</span><b id="race-clock">0.0 s</b><span id="race-speed-note" class="pill">1× 速度</span></div>
+      <div class="race-ctl">
+        <div class="seg" data-g="res" role="group" aria-label="計時所用的輸出解析度"><button type="button" aria-pressed="true">720p</button><button type="button" aria-pressed="false">1080p</button><button type="button" aria-pressed="false">1440p</button><button type="button" aria-pressed="false">4K</button></div>
+        <div class="seg" data-g="k" role="group" aria-label="ReLoopVSR-fast 的關鍵幀間隔"><button type="button" aria-pressed="false">K=4</button><button type="button" aria-pressed="false">K=8</button><button type="button" aria-pressed="false">K=12</button><button type="button" aria-pressed="false">K=16</button><button type="button" aria-pressed="true">K=20</button></div>
+        <div class="seg" data-g="speed" role="group" aria-label="競賽的播放速度"><button type="button" data-s="1" aria-pressed="true">1×</button><button type="button" data-s="4" aria-pressed="false">4×</button><button type="button" data-s="16" aria-pressed="false">16×</button></div>
+        <button class="play" id="race-pause" type="button">暫停</button><button class="play" id="race-replay" type="button">重播</button>
+      </div>
+    </div>
+    <div class="race-grid">
+      <div class="rp rp-in" data-m="input"><div class="rv"><video muted playsinline preload="none" poster="../media/poster/race_input.webp" tabindex="-1" aria-label="輸入串流，REDS4 片段 000，雙三次上取樣" data-src="../media/race/input.mp4"></video><span class="rn">輸入（雙三次）</span></div>
+        <div class="rm"><div class="rb"><i></i></div><p><b class="rc">0 / 100</b> <span id="race-in-note">即 ReLoopVSR 正在還原的同一幀。</span></p></div></div>
+      <div class="rps" id="race-panels"></div>
+      <div class="chips" id="race-chips" aria-label="其他受評方法，僅顯示計數器"></div>
+    </div>
+    <p class="race-label">單張 RTX PRO 6000，×4，半精度（論文表 7）。此為以較早檢查點對 REDS4 片段 000 的示意重播。</p>
+    <p id="race-cap" aria-live="polite"></p>
+    <p class="vh">在 720p 下，ReLoopVSR-fast 於 0.04 s 顯示首幀，並以 249 FPS 運行。</p>
+  </section>
+  <noscript><p class="note">比較滑桿、圖表與表格需要 JavaScript。論文圖片與文字仍可閱讀。</p></noscript>
+  <figure class="fig-wrap teaser"><div class="fig"><a href="../assets/fig/teaser_top.webp?v=20261117f"><img src="../assets/fig/teaser_top.webp?v=20261117f" width="2400" height="1252" loading="lazy" decoding="async" alt="左：兩段由 960×540 輸入產生的 4K ReLoopVSR 輸出，與輸入左右分割比較，分別標示 720p 達 240+ FPS 與 4K 達 28+ FPS。中：FlashVSR-Tiny、InfVSR、ReLoopVSR 與真實值的裁切。右：LPIPS 對 FPS 的關係圖，泡泡大小代表參數量，ReLoopVSR 及其 K=4 至 20 的快速設定位於低 LPIPS、高 FPS 處；各方法的首幀時間，ReLoopVSR 在 FP32 下需 0.22 s、在 FP16 下需 0.04 s；以及 720p 至 4K 的峰值記憶體，ReLoopVSR 需 2.1 至 11.6 GiB。"></a></div>
+    <figcaption><b>以 ReLoopVSR 進行串流影片超解析度</b>（論文圖 1）。ReLoopVSR 傳遞前一幀的還原結果，並以目前的觀測在單一去噪步驟中加以精煉。在受評方法中，它兼具具競爭力的保真度、時間一致性與吞吐量，且未來幀依賴為零、實測首幀時間最短、峰值記憶體用量最低。</figcaption></figure>
+</div></div>
+
+<section id="results"><div class="wrap">
+  <div class="head"><p class="eyebrow">結果</p><h2>輸入與 ReLoopVSR 並排比較</h2>
+  <p>每段片段皆為 ×4。左側為雙三次上取樣的低解析度輸入，右側為 ReLoopVSR。兩側位於同一個影片檔中，因此始終停在同一幀。</p></div>
+  <p class="note illus"><b>僅供示意：</b>以較早的檢查點還原，不屬於論文的評估。</p>
+  <div id="show-tabs" class="tabs"></div>
+  <div id="showcase" class="grid2">
+    <article class="card" data-ds="REDS4"><div class="cmp" data-clip="reds_011" data-desc="有傳統牆面的巷弄與一位穿著花紋洋裝的遊客，REDS4 片段 011" data-cap="<b>REDS4 片段 011</b>。1280×720，100 幀，24 fps。"></div></article>
+    <article class="card" data-ds="REDS4"><div class="cmp" data-clip="reds_020" data-desc="擺著畫作的街頭攤位與往來行人，REDS4 片段 020" data-cap="<b>REDS4 片段 020</b>。1280×720，100 幀，24 fps。"></div></article>
+    <article class="card" data-ds="YouHQ40"><div class="cmp" data-clip="youhq_018" data-desc="沿路設有條紋遮陽棚的飯店外觀，YouHQ40 片段 018" data-cap="<b>YouHQ40 片段 018</b>。1920×1080，全部 33 幀，以 12 fps 播放。"></div></article>
+    <article class="card" data-ds="YouHQ40"><div class="cmp" data-clip="youhq_019" data-desc="有高樓大廈的城市空拍，YouHQ40 片段 019" data-cap="<b>YouHQ40 片段 019</b>。1920×1080，全部 33 幀，以 12 fps 播放。包含該資料集唯一的場景切換，位於第 17 幀。"></div></article>
+    <article class="card" data-ds="Tears of Steel"><div class="cmp" data-clip="tos_dialog" data-desc="電影 Tears of Steel 的鏡頭，一名男子正瞄準一具機械裝置" data-cap="<b>Tears of Steel，對話片段</b>。1280×720，第 41–164 幀，24 fps，於第 85 幀有一次切換。"></div></article>
+    <article class="card" data-ds="Tears of Steel"><div class="cmp" data-clip="tos_room1" data-desc="電影 Tears of Steel 的鏡頭，一名士兵位於欄杆後方" data-cap="<b>Tears of Steel，室內片段</b>。1280×720，前 144 幀，24 fps，於第 60 與 124 幀有切換。"></div></article>
+    <article class="card" data-ds="VideoLQ"><div class="cmp" data-clip="vlq_013" data-desc="有店家招牌與磚造建築的街道，真實世界 VideoLQ 片段 013" data-cap="<b>VideoLQ 片段 013</b>，真實世界微調檢查點。2560×1440 輸出，此處縮放至 1920×1080。VideoLQ 沒有真實值，因此細節可能只是看似合理而非真實。"></div></article>
+    <article class="card" data-ds="VideoLQ"><div class="cmp" data-clip="vlq_005" data-desc="彩繪建築前的鍛鐵路燈，真實世界 VideoLQ 片段 005" data-cap="<b>VideoLQ 片段 005</b>，真實世界微調檢查點。1280×960，100 幀，24 fps。VideoLQ 沒有真實值，因此細節可能只是看似合理而非真實。"></div></article>
+  </div>
+</div></section>
+
+<section id="method" class="alt"><div class="wrap">
+  <div class="head"><p class="eyebrow">方法</p><h2>循環自迴歸精煉</h2>
+  <p>串流 VSR 在低解析度觀測陸續到達時重建高解析度幀，不使用未來幀，且每幀的運算預算有上限。經過運動補償後，先前還原的內容已經是目前幀的估計，因此 ReLoopVSR 修正這個估計，而不是每幀都從雜訊生成。在第 <i>k</i> 幀，輸出只取決於目前的低解析度輸入，以及一個快取潛在表示、RGB 輸出與解碼器特徵的固定大小循環狀態。</p>
+  <ul><li>前一幀去噪後的潛在表示會對齊到目前幀，經重新加噪使繼承的細節得以修正，再以目前的觀測為條件，在一步去噪中加以精煉。對時間上對應的內容反覆更新，形成一種時空動量，在參數固定的情況下延伸了有效的運算深度。</li><li>然而，對齊誤差、遮蔽區域重現、光照變化與場景切換會使繼承的內容失效，並造成誤差尖峰。因此，局部與全域的可靠性控制會即時截斷這個動量：不可靠的圖塊從目前的 LR 觀測重新開始，遇到全域變化時則重設整個狀態。</li><li>由於每個輸出都會成為下一幀的起點，模型先以自身的串流展開進行訓練，再加入感知時間監督，使其學會修正繼承而來的誤差。</li></ul></div>
+  <figure class="sch" id="schematic" aria-label="比較三類方法如何產生第 k 幀的動畫示意圖"></figure>
+  <figure class="fig-wrap"><div class="fig"><a href="../assets/fig/method.webp?v=20261117f"><img src="../assets/fig/method.webp?v=20261117f" width="2400" height="838" loading="lazy" decoding="async" alt="連續幀上的處理流程。每一列以光流將前一幀去噪後的潛在表示扭曲到第 k 幀，由可靠性控制保留可靠的圖塊、其餘圖塊則從編碼後的 LR 幀重新開始，接著將結果重新加噪，以一個共用的去噪步驟精煉，並以快取的解碼器特徵解碼。適配器傳遞來自前一輸出的引導。遇到場景切換時會重設狀態。"></a></div>
+    <figcaption><b>ReLoopVSR 中的循環自迴歸精煉</b>（論文圖 3）。共用的一步去噪器從前一幀的還原結果還原每一幀：去噪後的潛在表示被扭曲到第 <i>k</i> 幀、重新加噪，並以目前的 LR 幀精煉；適配器與快取的解碼器特徵則傳遞來自前一輸出的引導。可靠性控制（DEN）保留可靠的圖塊，讓不可靠的圖塊從編碼後的 LR 幀重新開始，並在場景切換時重設整個狀態。</figcaption></figure>
+
+  <div style="margin-top:36px">
+  <div class="feature"><div class="ft"><span class="num">01</span><h3>潛在空間中的循環精煉</h3>
+    <p>ReLoopVSR 以前一幀的還原結果作為初始估計。目前與前一幀 LR 輸入經雙三次 ×4 上取樣後計算光流，用以將快取的去噪潛在表示對齊到第 <i>k</i> 幀。對齊後的潛在表示被重新加噪到中間程度，並在單一去噪步驟中精煉，精煉後的潛在表示則快取為下一幀的狀態。</p>
+    <ul><li>與 SDEdit 和 ResShift 相同，重新加噪讓目前的觀測能夠修正繼承的細節。相較之下，Stream-DiffVSR 的每條四步軌跡都從雜訊開始，前一幀的還原結果僅作為條件使用。</li><li>此設計受到 looped Transformer 的啟發：它在多次迭代間重複使用共用參數，以在精簡的模型中增加有效深度。在這裡，迭代是跨幀進行的，每幀一個去噪步驟。</li><li>在 YouHQ40 與 REDS4 上，改從編碼後的 LR 而非傳遞而來的潛在表示開始，空間指標幾乎不變，但 tLP 上升 12%；而移除整個循環狀態使 tLP 上升最多，從 0.596 升至 1.093。</li></ul></div>
+    <figure class="fig-wrap"><div class="fig"><a href="../assets/fig/recurrent_refinement_schematic.webp?v=20261117f"><img src="../assets/fig/recurrent_refinement_schematic.webp?v=20261117f" width="1600" height="943" loading="lazy" decoding="async" alt="上：一段含兩次場景切換的膠卷，ReLoopVSR 使用自上次切換以來的目前與過去幀，而基於區塊的 DiT 則跨越切換緩衝 n 個未來幀。下：ReLoopVSR 以 LR 光流扭曲前一輸出，將對齊結果重新加噪，在一個蒸餾後的步驟中以目前的 LR 幀精煉，並將新輸出回饋作為循環精煉。"></a></div>
+    <figcaption><b>串流輸入與循環精煉</b>（論文圖 2）。基於區塊的 DiT 方法會緩衝 <i>n</i> 個未來幀，增加延遲，並在切換處混入無關內容；ReLoopVSR 僅使用自上次切換以來的目前與過去幀，透過循環精煉以自迴歸方式累積時空動量。</figcaption></figure></div>
+
+  <div class="feature"><div class="ft"><span class="num">02</span><h3>局部與全域可靠性控制</h3>
+    <p>在一致的場景中，傳遞而來的還原結果能強化精簡的模型；但移動的人物等局部不一致，以及光照變化與場景切換等全域不一致，一旦被傳遞就會造成誤差尖峰。因此，一個輕量的動態估計網路（Dynamic Estimation Network，DEN）從目前的 LR 輸入、扭曲後的前一幀 LR 輸入與對齊後的潛在表示，預測對齊潛在表示的還原誤差。</p>
+    <ul><li>在局部層面，預測誤差低的圖塊保留對齊後的還原結果，其餘圖塊則從編碼後的雙三次上取樣觀測重新開始。兩種來源共用同一個去噪步驟，因此重新開始不會增加去噪器的評估次數。</li><li>在全域層面，當不可靠圖塊覆蓋至少一半畫面且偵測到全域 LR 外觀變化時，整個狀態會重設。重設同時清除時間條件與光流的暖啟動，且不需要未來幀。</li><li>停用可靠性控制會使 29 個切換事件處的 LPIPS 從 0.0820 升至 0.1088，因此其效益來自完整重設。</li></ul></div>
+    <figure class="fig-wrap"><div class="fig"><a href="../assets/fig/den_motivation.webp?v=20261117f"><img src="../assets/fig/den_motivation.webp?v=20261117f" width="1600" height="679" loading="lazy" decoding="async" alt="可靠性控制示意圖：在局部層面，可靠的圖塊保留對齊後的還原結果，不可靠的圖塊從目前的 LR 觀測重新開始；在全域層面，場景切換會重設狀態並清除時間條件。"></a></div>
+    <figcaption><b>局部與全域可靠性控制</b>（論文圖 4）。在局部層面，可靠的圖塊保留對齊後的還原結果，不可靠的圖塊則中止動量並從目前的 LR 觀測重新開始。在全域層面，場景切換的重設也會清除時間條件。</figcaption></figure></div>
+
+  <div class="feature wide"><div class="ft"><span class="num">03</span><h3>學習循環精煉</h3>
+    <p>骨幹網路針對此形式、在固定的每幀預算內分四個階段訓練：空間適應、一步蒸餾、自我展開微調與時間微調。</p>
+    <ul><li>空間適應教導 U-Net 精煉帶有空間變化損壞、經重新加噪的傳遞估計；一步蒸餾則從共用的初始潛在表示壓縮幀內精煉。</li><li>自我展開微調以凍結的初始學生模型為參照，重播已分離（detached）的模型生成串流狀態，包括重新開始、重設與快取的解碼器特徵，並交替更新去噪器、適配器與時間解碼器。以光流遮罩的一致性損失使時間殘差與真實值相符，無參考品質項則加入 MUSIQ 與 CLIP-IQA。</li><li>接著，時間微調加入一項損失，使鏡頭內幀間感知變化的幅度與真實值相符。在 REDS4 上，它將 tLP 從 0.682 降至 0.301。</li></ul></div>
+    <figure class="fig-wrap"><div class="fig"><a href="../assets/fig/fig5_distill.webp?v=20261117f"><img src="../assets/fig/fig5_distill.webp?v=20261117f" width="2400" height="1132" loading="lazy" decoding="async" alt="分為三個面板的訓練流程：以四步教師進行空間適應；以從相同起點出發的兩步教師進行一步蒸餾；以及自我展開微調，在已分離的自我展開紀錄上交替更新去噪器、適配器與時間解碼器，並以凍結的初始學生模型為參照，搭配展開損失與沿真實值光流的一致性損失。"></a></div>
+    <figcaption><b>ReLoopVSR 的訓練流程</b>（論文圖 5）。(a) 空間適應訓練 U-Net 精煉經重新加噪的傳遞估計。(b) 一步蒸餾以共用的初始潛在表示壓縮幀內精煉。(c) 自我展開微調在已分離的模型生成狀態上交替更新去噪器、適配器與時間解碼器，並以凍結的初始學生模型為參照。</figcaption></figure></div>
+
+  <div class="feature"><div class="ft"><span class="num">04</span><h3>輕量的時間模組</h3>
+    <p>由於初始潛在表示已帶有還原內容，時間引導可以專注於精煉它。從前一 RGB 輸出重新擷取特徵的 ControlNet 式編碼器，相對於一步去噪的成本非常高，因此 ReLoopVSR 改用精簡的適配器與快取的解碼器特徵。</p>
+    <ul><li>卷積時間適配器（25.7M 參數）接收去噪器輸入、扭曲後的前一輸出與 DEN 圖，並產生 13 個殘差。由 DEN 圖預測的閘控會在不可靠區域削弱引導，且適配器在第一幀與切換處會被略過。</li><li>時間解碼器透過零初始化的殘差對齊並融合快取的區塊特徵，避免從前一 RGB 輸出重新擷取，並限制高解析度下的成本。</li></ul></div>
+    <figure class="fig-wrap narrow"><div class="fig"><a href="../assets/fig/adapter_style.webp?v=20261117f"><img src="../assets/fig/adapter_style.webp?v=20261117f" width="1600" height="2281" loading="lazy" decoding="async" alt="時間適配器、使用扭曲快取特徵的時間解碼器、用於非關鍵幀的快速解碼器、DEN 誤差預測器，以及含場景切換重設的圖塊選擇之方塊圖。"></a></div>
+    <figcaption><b>時間模組與可靠性控制</b>（補充材料）。(a) 以可靠性與雜訊程度為條件的適配器。(b) 融合扭曲快取特徵的解碼器。(c) 用於非關鍵幀的快速解碼器。(d) 預測對齊潛在表示誤差的 DEN。(e) 圖塊選擇與場景切換重設。</figcaption></figure></div>
+  </div>
+</div></section>
+
+<section id="fast"><div class="wrap">
+  <div class="head"><p class="eyebrow">ReLoopVSR-fast</p><h2>關鍵幀稀疏的串流推論</h2>
+  <p>相鄰幀在時間上具有冗餘，因此大多數幀可以從循環狀態更新，而不需要新的擴散步驟。秉持 SlowFast 網路的精神，ReLoopVSR-fast 只對關鍵幀套用一步擴散，其間的幀則由輕量的快速解碼器還原，該解碼器使用目前的 LR 輸入與經閘控、對齊的歷史資訊。它仍維持因果性，並立即輸出每一幀。</p>
+  <ul><li>關鍵幀從第一幀開始，並以標稱間隔 <i>K</i> 重複出現；LR 外觀變化會提前觸發關鍵幀，且每個關鍵幀都使用可靠性控制。<i>K</i>=0 即為 ReLoopVSR-base。</li><li>較大的 <i>K</i> 讓去噪器的成本分攤到更多幀上，但會犧牲一些保真度。訓練沿用基礎流程，另外針對快速解碼器加入隨時間反向傳播（BPTT）。</li></ul></div>
+  <figure class="fig-wrap narrow"><div class="fig"><a href="../assets/fig/fast_inference.webp?v=20261117f"><img src="../assets/fig/fast_inference.webp?v=20261117f" width="1600" height="703" loading="lazy" decoding="async" alt="連續五幀 k 至 k+4。第 k 與 k+4 幀經過一步擴散，並更新潛在表示、RGB 與特徵的關鍵幀快取；第 k+1 至 k+3 幀使用快速解碼器，其輸入為目前的 LR 幀、以合成光流對齊的關鍵幀參考，以及前一 RGB 輸出。紅色箭頭標示跨快速解碼器幀的 BPTT 梯度。"></a></div>
+    <figcaption><b>快速串流推論</b>（<i>K</i>=4 範例；論文圖 6）。擴散更新會刷新關鍵幀快取，輕量的快速解碼器則還原其間的幀。藍色路徑以合成光流對齊快取的參考，灰色路徑傳遞前一 RGB 輸出，紅色箭頭表示用於微調快速解碼器的 BPTT 梯度。LR 外觀變化可能提前觸發關鍵幀。</figcaption></figure>
+  <div class="sub"><p class="eyebrow">論文表 3</p><h3>與加速串流 VSR 方法的比較</h3>
+  <p class="note">在半精度下，ReLoopVSR-fast 在不存取未來幀的情況下，從 <i>K</i>=4 的 85.7 FPS 到 <i>K</i>=20 的 249.4 FPS，比所有競爭方法都快（最高為 RelayVSR 的 4.0×）。五種設定在所有全參考與時間指標以及 CLIP-IQA 上也都優於這些方法。相較於 ReLoopVSR-base，<i>K</i>=16 使 LPIPS 從 0.0864 升至 0.1030、tLP 從 0.210 升至 0.374，換得 13× 的吞吐量。</p></div>
+  <div class="legend"><span><i style="background:#7CB696"></i>最佳</span><span><i style="background:#BEDBBD"></i>第二</span><span><i style="background:#E8F1E4"></i>第三</span><span>紅色：比 REDS4 Bicubic 差超過 <i style="background:#F7E4E1"></i>5%、<i style="background:#EDBDB6"></i>25%、<i style="background:#DC8F86"></i>50%</span></div>
+  <div class="scroll" tabindex="0" role="region" aria-label="加速串流比較表，可捲動"><table id="stream-table">
+    <thead><tr><th scope="col" rowspan="2">方法</th><th scope="colgroup" colspan="6">效率（720p，FP16/BF16，100 幀）</th><th scope="colgroup" colspan="9">品質（REDS4，×4）</th></tr>
+    <tr><th scope="col">參數量</th><th scope="col">TFLOPs ↓</th><th scope="col">未來幀</th><th scope="col">FPS ↑</th><th scope="col">TTFF (s) ↓</th><th scope="col">記憶體 ↓</th><th scope="col">PSNR ↑</th><th scope="col">SSIM ↑</th><th scope="col">LPIPS ↓</th><th scope="col">DISTS ↓</th><th scope="col">VMAF ↑</th><th scope="col">MUSIQ ↑</th><th scope="col">CLIP-IQA ↑</th><th scope="col">tLP ↓</th><th scope="col">tOF ↓</th></tr></thead>
+    <tbody></tbody></table></div>
+  <p class="note" style="margin-top:8px">SwiftVR、FastVR、ReCaVSR、RelayVSR 與 FlashVSR+ 以官方設定、官方半精度執行；ReLoopVSR 以 FP16 執行。未來幀欄位計算可影響輸出的未來輸入幀數。記憶體為以 GiB 計的 GPU 峰值記憶體。</p>
+  <figure class="fig-wrap"><div class="fig"><a href="../assets/fig/qualitative_accel.webp?v=20261117f"><img src="../assets/fig/qualitative_accel.webp?v=20261117f" width="2400" height="667" loading="lazy" decoding="async" alt="Bicubic、SwiftVR、FastVR、ReCaVSR、RelayVSR、FlashVSR+、K=8 的 ReLoopVSR-fast、ReLoopVSR 與真實值在 REDS4 片段 000、011 與 020 上的裁切，各自標示裁切 LPIPS；ReLoopVSR 在三個裁切上的 LPIPS 皆最低，ReLoopVSR-fast 次低。"></a></div>
+    <figcaption><b>與加速串流 VSR 方法的定性比較</b>，REDS4（補充材料）。數字為裁切區域的 LPIPS ↓，最佳者以粗體標示。</figcaption></figure>
+</div></section>
+
+<section id="performance"><div class="wrap">
+  <div class="head"><p class="eyebrow">效能</p><h2>720p 下的運算成本與因果延遲</h2>
+  <p>在 REDS4 片段 000 上的完整流程成本，100 幀、720p 輸出，使用單張 RTX PRO 6000 Blackwell（96 GiB），FP32，採官方推論設定。未來幀計算可影響輸出的未來輸入數；由於基於區塊的方法會緩衝輸入，首幀時間（TTFF）與吞吐量並列報告。在實測的方法中，ReLoopVSR 不依賴任何未來幀，TTFF 最短，峰值記憶體最低。</p></div>
+  <div class="stack">
+    <div class="panel">
+      <div id="eff-tabs" class="tabs" style="justify-content:flex-start;margin-bottom:12px"></div>
+      <p class="note" id="eff-label" aria-live="polite"></p>
+      <div class="bars" id="eff-bars" role="list" aria-label="方法由最佳排序至最差"></div>
+      <p class="note axisn">將游標移到某列或聚焦該列以查看所有數值。ReLoopVSR-NVOFA 以硬體光流（NVOFA）取代 RAFT。</p>
+    </div>
+    <div>
+      <p class="eyebrow" style="margin-bottom:6px">論文表 1</p>
+      <div class="legend" aria-hidden="true"><span><i style="background:#7CB696"></i>最佳</span><span><i style="background:#BEDBBD"></i>第二</span><span><i style="background:#E8F1E4"></i>第三</span></div>
+      <div class="scroll" tabindex="0" role="region" aria-label="成本表，可捲動"><table id="eff-table"><thead><tr><th scope="col">方法（FP32）</th><th scope="col">參數量（M）</th><th scope="col">TFLOPs ↓</th><th scope="col">未來幀</th><th scope="col">FPS ↑</th><th scope="col">TTFF (s)</th><th scope="col">峰值（GiB）</th></tr></thead><tbody></tbody></table></div>
+      <p class="note" style="margin-top:8px">每個 720p 輸出幀的 TFLOPs。嚴格 FP32，採官方推論設定；FlashVSR 的執行程式保留其 BF16 稀疏注意力核心。</p>
+    </div>
+    <div class="panel">
+      <h3 style="margin-bottom:6px">不同輸出解析度（FP16）</h3>
+      <p class="note" style="margin-bottom:12px">×4，100 幀，取自補充材料的解析度表。<i>K</i>=20 的 ReLoopVSR-fast 在 720p 下達 249.43 FPS、4K 下達 28.13 FPS，峰值記憶體分別為 2.2 GiB 與 11.7 GiB，而數個基準方法在 4K 下記憶體不足。補充材料也報告了 FP32 與 BF16 的結果。</p>
+      <div class="scroll" tabindex="0" role="region" aria-label="解析度表，可捲動"><table id="res-table">
+      <thead><tr><th scope="col" rowspan="2">方法</th><th scope="colgroup" colspan="3">720p</th><th scope="colgroup" colspan="3">1080p</th><th scope="colgroup" colspan="3">1440p (2K)</th><th scope="colgroup" colspan="3">2160p (4K)</th></tr>
+      <tr><th scope="col">FPS ↑</th><th scope="col">TTFF ↓</th><th scope="col">GiB ↓</th><th scope="col">FPS ↑</th><th scope="col">TTFF ↓</th><th scope="col">GiB ↓</th><th scope="col">FPS ↑</th><th scope="col">TTFF ↓</th><th scope="col">GiB ↓</th><th scope="col">FPS ↑</th><th scope="col">TTFF ↓</th><th scope="col">GiB ↓</th></tr></thead>
+      <tbody></tbody></table></div>
+      <p class="note" style="margin-top:8px">TTFF 單位為 s。† 由較短的執行推估。§ 官方半精度僅支援 BF16。‡ 即時計算 RAFT 相關性。OOM：超過 96 GiB。分隔線以下的列為表 3 中的加速方法。</p>
+    </div>
+  </div>
+</div></section>
+
+<section id="benchmarks" class="alt"><div class="wrap">
+  <div class="head"><p class="eyebrow">基準測試</p><h2>七個測試集上的定量比較</h2>
+  <p>全精度下的 ×4 還原，基準方法採官方設定（論文表 2）。ReLoopVSR 在全部六個成對資料集上取得最低的 LPIPS 與 DISTS。相較於四步的 Stream-DiffVSR，它在全部六個資料集上都提升了 PSNR 與 SSIM，並在其中四個取得最高的 VMAF。較大的擴散先驗仍在每個成對資料集上領先 MUSIQ。</p></div>
+  <div id="bench-tabs" class="tabs"></div>
+  <p class="sumline" id="bench-sum" aria-live="polite"></p><p class="meta-line" id="bench-meta"></p>
+  <div class="legend"><span><i style="background:#7CB696"></i>最佳</span><span><i style="background:#BEDBBD"></i>第二</span><span><i style="background:#E8F1E4"></i>第三</span><span>紅色：比 Bicubic 差超過 <i style="background:#F7E4E1"></i>5%、<i style="background:#EDBDB6"></i>25%、<i style="background:#DC8F86"></i>50%</span><span>↑ 越高越好</span><span>↓ 越低越好</span></div>
+  <div class="scroll" id="bench-table" tabindex="0" role="region" aria-label="基準測試表，可捲動"></div>
+  <p class="note" style="margin-top:12px">成對測試使用雙三次 ×4 輸入與以雙三次退化訓練的模型。VideoLQ 沒有真實值，使用以 DOVE 壓縮退化微調的 ReLoopVSR。tLP 乘以 100。Bicubic 為上取樣後的輸入。同分者名次相同。</p>
+</div></section>
+
+<section id="temporal"><div class="wrap">
+  <div class="head"><p class="eyebrow">時序</p><h2>時間保真度、誤差尖峰與場景切換</h2>
+  <p>時間評估應考量真實的場景變化。tLP 衡量幀間感知變化與真實值之間的差異，tOF 則衡量重建幀與真實值幀之光流的差異。</p></div>
+  <div class="tcards">
+    <div class="tcard"><b>在全部六個成對資料集上 tOF 最低</b><span>除 SPMCS 外，ReLoopVSR 在每個成對資料集上的 tLP 也最低，且其 tLP 比 Stream-DiffVSR 低 45–61%。</span></div>
+    <div class="tcard"><b>LPIPS 無明顯上升趨勢</b><span>在含場景切換的 500 幀串流中，考量場景難度後，LPIPS 沒有明顯的上升趨勢，這顯示在受評的時間範圍內誤差累積有限。</span></div>
+    <div class="tcard"><b>找到 121/121 個切換</b><span>於整部 <i>Tears of Steel</i> 電影的串流上，未來幀為 0；在 LongAIGC-4 上找到 29/34 個切換對，未來幀同樣為 0。</span></div>
+  </div>
+  <div class="two" style="margin-top:8px">
+  <figure class="fig-wrap"><div class="fig"><a href="../assets/fig/ablation_profile_long.webp?v=20261117f"><img src="../assets/fig/ablation_profile_long.webp?v=20261117f" width="2160" height="1600" loading="lazy" decoding="async" alt="LongAIGC 片段 004 中一條黃色掃描線在 500 幀上堆疊而成的圖，分別對應真實值、FastVR、SwiftVR、ReCaVSR、RelayVSR 與 ReLoopVSR，每個方法下方有放大的誤差條，紅色刻度標示切換處；ReLoopVSR 的誤差條最暗。"></a></div>
+    <figcaption><b>500 幀的時間剖面</b>（論文圖 8）。一條掃描線隨時間向下堆疊；細條顯示放大 10× 的相對真實值誤差，紅色刻度標示切換處。在串流擴散方法中，ReLoopVSR 在取樣掃描線上的誤差最低。</figcaption></figure>
+  <figure class="fig-wrap"><div class="fig"><a href="../assets/fig/cut_timeline.webp?v=20261117f"><img src="../assets/fig/cut_timeline.webp?v=20261117f" width="1600" height="706" loading="lazy" decoding="async" alt="含九次切換的 500 幀 LongAIGC 片段上的逐幀 LPIPS。ReLoopVSR 全程維持在約 0.02；沒有可靠性控制時，每次切換處都出現尖峰；ReCaVSR、RelayVSR、SwiftVR、FastVR 與 FlashVSR+ 則介於約 0.05 至 0.28 之間。"></a></div>
+    <figcaption><b>串流超解析度過程中的誤差尖峰</b>（論文圖 9）。可靠性控制抑制了切換處的尖峰，ReLoopVSR 持續提供低 LPIPS，而串流基準方法累積誤差，LPIPS 高出 5–9×。</figcaption></figure>
+  </div>
+  <div class="two" style="margin-top:32px;align-items:center">
+    <figure class="fig-wrap"><div class="fig"><a href="../assets/fig/video_profiles.webp?v=20261117f"><img src="../assets/fig/video_profiles.webp?v=20261117f" width="2200" height="1029" loading="lazy" decoding="async" alt="YouHQ40 片段 038 中鬍鬚紋理的掃描線隨時間的剖面，對應真實值與數個方法。"></a></div>
+    <figcaption><b>時間剖面</b>，YouHQ40 片段 038（補充材料）。一條掃描線隨時間堆疊，呈現鬍鬚紋理的對比如何隨運動持續與變化；ReLoopVSR 保留了更多此類結構。</figcaption></figure>
+    <div><p class="eyebrow" style="margin-bottom:6px">論文表 6：場景切換偵測與還原</p><div class="scroll" tabindex="0" role="region" aria-label="場景切換表，可捲動"><table>
+      <thead><tr><th scope="col" rowspan="2">影片素材</th><th scope="colgroup" colspan="2">找到的切換</th><th scope="colgroup" colspan="2">未來幀</th><th scope="colgroup" colspan="3">LPIPS ↓</th></tr>
+      <tr><th scope="col">本文方法</th><th scope="col">PSD</th><th scope="col">本文方法</th><th scope="col">PSD</th><th scope="col">本文方法</th><th scope="col">無重設</th><th scope="col">Stream-DiffVSR</th></tr></thead>
+      <tbody><tr><th scope="row"><i>Tears of Steel</i></th><td class="dv">121/121</td><td>117/121</td><td class="dv">0</td><td>15</td><td class="dv">0.0693</td><td>0.0955</td><td>0.1334</td></tr>
+      <tr><th scope="row">LongAIGC-4</th><td class="dv">29/34</td><td>28/34</td><td class="dv">0</td><td>15</td><td class="dv">0.0326</td><td>–</td><td>0.1077</td></tr></tbody></table></div>
+    <p class="note" style="margin-top:8px">PSD 表示採用 InfVSR 設定的 PySceneDetect。切換數於整部 <i>Tears of Steel</i> 電影的串流，以及 LongAIGC-8 中的四段 AIGC 片段上計算。強烈的閃光也可能觸發重設。</p></div>
+  </div>
+  <div style="margin-top:32px"><figure class="fig-wrap"><div class="fig"><a href="../assets/fig/long_drift.webp?v=20261117f"><img src="../assets/fig/long_drift.webp?v=20261117f" width="2400" height="1432" loading="lazy" decoding="async" alt="LongAIGC-8 上十個方法的三欄圖表。左：兩段 500 幀片段上的逐幀 LPIPS 與 PSNR，虛線標示場景切換，ReLoopVSR 全程 LPIPS 最低。中：39 個鏡頭中 LPIPS 與 PSNR 變化對自上次切換以來幀數的關係。右：8 段片段上每 100 幀的 LPIPS 與 PSNR 斜率及 95% 區間，分為原始與內容校正兩種，ReLoopVSR 的 LPIPS 斜率接近零。"></a></div>
+    <figcaption><b>長串流上的品質</b>，LongAIGC-8（補充材料）。左：兩段片段上的逐幀 LPIPS 與 PSNR，虛線標示場景切換。中：品質對自上次切換以來幀數的關係。右：每 100 幀的斜率及 95% 區間，分為原始與依雙三次內容趨勢校正兩種。</figcaption></figure></div>
+</div></section>
+
+<section id="faq" class="alt"><div class="wrap">
+  <div class="head"><p class="eyebrow">常見問題</p><h2>問題與限制</h2></div>
+  <div class="faq">
+  <details open><summary>ReLoopVSR 是什麼？<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>ReLoopVSR 是一個精簡的循環自迴歸擴散框架，用於串流 ×4 影片超解析度。它將前一幀去噪後的潛在表示對齊並重新加噪，作為目前更新的初始值，再透過共用的一步去噪器以目前的低解析度觀測加以精煉。輕量的時間模組降低了條件輸入與解碼的成本。</p><p>局部與全域可靠性控制會在預測到誤差的地方停止傳遞，而結合感知時間監督的展開訓練則讓模型學會修正繼承的誤差。ReLoopVSR-fast 只在關鍵幀上執行去噪器，其他幀則由輕量的快速解碼器還原。</p></div></details>
+  <details><summary>為什麼採用自迴歸？<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>在同一場景中，經運動補償後的前一幀還原結果已是目前幀的估計，因此修正它比從雜訊重新生成該幀更省成本。每次更新只依賴已經到達的輸入，因此不需要緩衝未來幀。</p><p>以同一個去噪器對時間上對應的內容反覆更新，可在參數固定、每幀一個去噪步驟的情況下，跨幀延伸有效的運算深度。</p></div></details>
+  <details><summary>ReLoopVSR-base 與 ReLoopVSR-fast 是什麼？<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>ReLoopVSR-base 在每一幀執行一次去噪步驟，保真度最佳。ReLoopVSR-fast 只在關鍵幀上執行去噪器，標稱間隔 <i>K</i> 為 4 至 20，其間的幀則由 3.70M 參數的快速解碼器還原。在 REDS4、720p、半精度下，<i>K</i>=4 達 85.7 FPS，<i>K</i>=20 達 249.4 FPS，但會犧牲一些保真度。</p></div></details>
+  <details><summary>如何處理場景切換？<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>當不可靠圖塊覆蓋至少一半畫面，且透過較大的色彩直方圖距離或與前一幀縮圖的低相關性偵測到全域 LR 外觀變化時，整個狀態會重設。潛在表示、時間條件與光流的暖啟動會一併清除，且不使用未來幀。</p><p>整部 <i>Tears of Steel</i> 電影串流中的全部 121 個切換都被偵測到，LongAIGC-4 上則偵測到 34 個切換對中的 29 個。強烈的閃光也可能觸發重設。</p></div></details>
+  <details><summary>與其他方法相比如何？<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>ReLoopVSR 在全部六個成對基準上取得最低的 LPIPS 與 DISTS，在全部六個上取得最低的 tOF，並在其中五個取得最低的 tLP。在共同的 720p 測試協定下，在實測的方法中，它不依賴任何未來幀，首幀時間最短，峰值記憶體最低。</p><p>然而，它並非在每個指標上都領先。較大的擴散先驗在每個成對資料集上領先 MUSIQ，DOVE 在 Vid4 與 SPMCS 上領先 SSIM 與 VMAF，而雙三次上取樣本身在 LongAIGC-8 上的 SSIM 最高。</p></div></details>
+  <details><summary>它是即時的嗎？<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>在單張 RTX PRO 6000 Blackwell 上以半精度執行時，ReLoopVSR-fast 在 720p 下超過 240 FPS、在 4K 下超過 28 FPS。ReLoopVSR-base 在 720p、FP16 下為 17.4 FPS，在嚴格 FP32 下為 3.58 FPS。兩者在因果意義上都屬於串流，因為每個輸出都不需等待未來幀即可取得。</p></div></details>
+  <details><summary>需要多少 GPU 記憶體？處理長影片時會記憶體不足嗎？<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>在 720p 下，峰值配置量為 ReLoopVSR（嚴格 FP32）4.92 GiB、ReLoopVSR-base（FP16）4.4 GiB、ReLoopVSR-fast 2.2 GiB。在半精度下，ReLoopVSR 以 11.6 GiB 的峰值記憶體還原 4K 影片。狀態大小固定且逐幀處理，因此記憶體用量不隨串流長度改變。</p></div></details>
+  <details><summary>支援哪些放大倍率？<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>受評的模型僅支援 ×4 還原，其他放大倍率尚未評估。</p></div></details>
+  <details><summary>為什麼在我自己的影片上，結果可能看起來接近雙三次？<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>預設模型是針對雙三次 ×4 輸入訓練的。壓縮或有其他退化的影片需要使用真實世界微調檢查點，也就是上表中用於 VideoLQ 的版本。即使如此，提升幅度仍取決於內容與指標。也請確認輸入是低解析度的原始來源，而不是已經放大過的影片。</p></div></details>
+  <details><summary>程式碼、權重、訓練腳本與 demo 是否已提供？<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>尚未提供。公開後，連結與授權條款會列在此處。</p></div></details>
+  </div>
+</div></section>
+
+<section id="citation"><div class="wrap">
+  <div class="head"><p class="eyebrow">引用</p><h2>引用本研究</h2><p>發表會議與連結將於日後補上。</p></div>
+  <div class="bib"><pre id="bibtex" tabindex="0" translate="no">@misc{reloopvsr,
+  title  = {ReLoopVSR: One-Step Recurrent Autoregressive Diffusion
+            Refinement for Streaming Video Super-Resolution},
+  author = {Lee, Chia-Ming and Chang, Ming-Ching and Li, Xin and Liu, Yu-Lun and Hsu, Chih-Chung},
+  year   = {2026},
+  note   = {Preprint}
+}</pre><button class="btn btn-s copy" id="copy" type="button">複製</button></div>
+  <p class="vh" id="copy-status" aria-live="polite"></p>
+  <div class="links-soon">
+    <button class="btn" type="button" disabled>論文 <small>即將推出</small></button>
+    <button class="btn" type="button" disabled>程式碼 <small>即將推出</small></button>
+    <button class="btn" type="button" disabled>權重 <small>即將推出</small></button>
+    <button class="btn" type="button" disabled>Demo <small>即將推出</small></button>
+  </div>
+</div></section>
+</main>
+<footer><div class="wrap">
+  <span class="brand" translate="no" style="font-size:1rem">ReLoop<b style="color:var(--accent-ink)">VSR</b></span>
+  <p>測試素材：論文中使用的 REDS4、YouHQ40、LongAIGC-8 影片與 VideoLQ，僅供研究比較之用。<i>Tears of Steel</i> (CC) Blender Foundation。</p>
+  <p>數據取自論文中的表格。本頁面不載入任何外部資源，也不收集任何資料。字型：Inter 與 JetBrains Mono，SIL Open Font License（見 assets/fonts）。</p>
+</div></footer>
+<script>window.DV_BASE='../';window.DV_I18N={"themeLight":"切換為淺色主題","themeDark":"切換為深色主題","sliderValue":"寬度的 {n}% 顯示{what}","gripName":"比較分割線：左側為輸入，右側為 ReLoopVSR","tagInput":"輸入（雙三次）","tagOurs":"ReLoopVSR","sliderWhat":"雙三次輸入","pause":"暫停","play":"播放","pauseClip":"暫停此片段","playClip":"播放此片段","decodeErr":"此瀏覽器無法解碼該片段；目前顯示靜態畫面，滑桿仍可使用。","soundOn":"開啟聲音","soundOff":"關閉聲音","muteClip":"將此片段靜音","unmuteClip":"取消此片段靜音","unitS":" s","doneAt":"完成於 ","done":"完成 ","oomAt":"{res} 下{why}","oomLong":"記憶體不足（OOM）","notRaced":"未參賽","waitFirst":"等待首幀","laneMeta":"{ttff} s，{fps} FPS","laneAria":"{name}，REDS4 片段 000，以 {res} 計時","clipNA":"片段無法使用","chipOom":"{res} 下{why}，未參賽","chipFrames":"{k} / 100 幀","chipWait":"0 / 100，首幀於 {t} s","resume":"繼續","speed1":"1× 速度","speedN":"加速 {n}×","raceCap":"{res}：{name}，首幀 {t} s，{fps} FPS。","all":"全部","filterTabs":"依資料集篩選比較","effFpsL":"720p、FP32 下的每秒幀數，越高越好","effTtffL":"首幀時間（秒），越低越好。對數軸，自 0.01 s 起。","effPeakT":"峰值記憶體","effPeakL":"以 GiB 計的 GPU 峰值配置記憶體，越低越好","effFutT":"未來幀","effFutL":"可影響輸出的未來幀數，越低越好","unitFr":" 幀","effTflL":"每個 720p 輸出幀的 TFLOPs，越低越好","effParT":"參數量","effParL":"參數量（百萬），越低越好","tip":"{fps} FPS · {tflops} TFLOPs/幀<br>TTFF {ttff} s · 峰值 {peak} GiB<br>未來幀 {future} · 參數量 {params} M","effTabs":"選擇成本指標","ours":"（本文方法）","grpOffline":"離線擴散","grpChunk":"串流區塊式擴散","grpAR":"串流自迴歸擴散","higher":"越高越好","lower":"越低越好","and":"、","leadItem":"{metric}（{who}）","sum":"ReLoopVSR 在 {set} 上：{n} 項指標中 {b} 項最佳、{s} 項第二、{t} 項第三{rest}。","sumRest":"，{o} 項未進入前三","sumLead":" 其他指標的最佳方法：{list}。","listSep":"；","metric":"指標","rBest":"最佳","rSecond":"第二","rThird":"第三","benchTabs":"選擇測試集","copiedMsg":"已複製到剪貼簿。","copyFail":"無法複製；請手動選取文字。","copied":"已複製","copy":"複製","sch.noise":"雜訊","sch.current_lr_frame_k":"目前 LR 幀 *k*","sch.previous_restoration":"前一幀還原結果","sch.conditioning":"條件輸入","sch.four_denoising_steps":"四個去噪步驟","sch.step":"步驟 ","sch.restored_frame_k":"還原幀 *k*","sch.frame_k_1_starts":"第 *k*+1 幀","sch.from_new_noise":"從新雜訊開始。","sch.buffered_chunk":"緩衝的區塊","sch.frame_k_waits":"第 *k* 幀等待","sch.future_frames":"未來幀","sch.joint_restoration_of_the_chunk":"整個區塊聯合還原","sch.the_next_chunk":"下一個區塊","sch.overlaps_this_one":"與此區塊重疊。","sch.previous_restored_latent":"前一還原潛在表示","sch.warp_by_flow":"光流扭曲","sch.aligned_latent":"對齊潛在表示","sch.encode":"編碼","sch.encoded_lr":"編碼後的 LR","sch.reliability_check":"可靠性檢查","sch.reliable_tiles":"可靠圖塊","sch.unreliable":"不可靠","sch.tiles":"圖塊","sch.propagated_start":"傳遞起點","sch.scene_cut":"場景切換","sch.resets_the_state":"將狀態重設為","sch.to_the_encoded_lr":"編碼後的 LR","sch.re_noise_to_an":"重新加噪至","sch.intermediate_level":"中間程度","sch.re_noised_start":"重新加噪起點","sch.current_lr":"目前 LR","sch.one_u_net_step":"一步 U-Net","sch.start_for_frame_k_1":"第 *k*+1 幀的起點","sch.regenerate_each_frame":"每幀重新生成","sch.example_stream_diffvsr":"例：Stream-DiffVSR","sch.each_new_frame_starts_from_noise_and_tak":"每個新幀都從雜訊開始，經過四個去噪步驟，並以前一幀的還原結果作為條件。因此每一幀的細節都會重新生成。","sch.regenerate_each_frame_noise_enters_a_cha":"每幀重新生成。雜訊進入一連串四個去噪步驟，以前一幀的還原結果與目前的低解析度幀為條件，產生還原後的第 k 幀。","sch.re_restore_chunks":"重複還原區塊","sch.examples_flashvsr_infvsr":"例：FlashVSR、InfVSR","sch.the_method_buffers_a_chunk_that_includes":"此方法緩衝一個包含未來幀的區塊，並聯合還原整個區塊。因此第 <i>k<\/i> 幀的輸出必須等待尚未到達的幀。","sch.re_restore_chunks_frames_including_futur":"重複還原區塊。包含未來幀在內的幀累積於緩衝區塊中，該區塊被聯合還原，接著從還原後的區塊取出第 k 幀。","sch.reloopvsr":"ReLoopVSR","sch.recurrent_refinement":"循環精煉","sch.reloopvsr_warps_the_previous_restored_la":"ReLoopVSR 將前一幀還原的潛在表示扭曲到第 <i>k<\/i> 幀，並讓不可靠的圖塊從編碼後的 LR 重新開始。接著以一個 U-Net 步驟精煉重新加噪的起點，其輸出成為下一幀的起點。","sch.reloopvsr_the_previous_restored_latent_i":"ReLoopVSR。前一幀還原的潛在表示，透過上取樣後低解析度輸入之間的光流扭曲到第 k 幀。可靠性檢查逐圖塊在對齊的潛在表示與編碼後的低解析度幀之間選擇，場景切換則將狀態重設為編碼後的低解析度幀。選定的起點被重新加噪到中間程度，並在目前低解析度幀的條件下以一個 U-Net 步驟精煉。還原後的第 k 幀回饋作為第 k+1 幀的起點。","sch.mode_all_three":"全部三種","sch.mode_regenerate":"重新生成","sch.mode_chunks":"區塊","sch.mode_reloopvsr":"ReLoopVSR","sch.schematic_not_data":"示意圖，非數據","sch.choose_which_pipeline_to_show":"選擇要顯示的流程","sch.replay_the_animation":"重播動畫","sch.replay":"重播","sch.where_each_starting_point_comes_from":"各起點的來源","sch.every_column_shows_the_same_reds4_crop_a":"每一欄都顯示同一個 REDS4 裁切，用以示意各狀態，因此縮圖不代表任何品質比較。","meta:REDS4":"4 段片段，400 幀，每段 100 幀，無切換","meta:Vid4":"4 段片段，171 幀，每段 34–49 幀，無切換","meta:SPMCS":"30 段片段，934 幀，每段 31–35 幀，無切換","meta:YouHQ40":"40 段片段，1318 幀，每段 31–33 幀，除片段 019 有 1 次切換外無切換","meta:LongAIGC-8":"8 段片段，4000 幀，每段 500 幀，64 次切換","meta:Tears of Steel":"5 段片段，1109 幀，每段 165–270 幀，11 次切換","meta:VideoLQ":"真實世界，無真實值。50 段片段，4771 幀，每段 34–100 幀"}</script>
+<script src="../assets/data.js?v=20261118t" defer></script>
+<script src="../assets/schematic.js?v=20261118i18n" defer></script>
+<script src="../assets/app.js?v=20261118i18n" defer></script>
+</body>
+</html>

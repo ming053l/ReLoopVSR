@@ -6,21 +6,41 @@
 <title>ReLoopVSR: One-Step Recurrent Autoregressive Diffusion Refinement for Streaming Video Super-Resolution</title>
 <meta name="description" content="ReLoopVSR: One-Step Recurrent Autoregressive Diffusion Refinement for Streaming Video Super-Resolution. Results, method, cost and benchmarks.">
 <meta name="robots" content="noindex">
+<!--i18n-head-->
+<link rel="canonical" href="https://ming053l.github.io/ReLoopVSR/">
+<link rel="alternate" hreflang="en" href="https://ming053l.github.io/ReLoopVSR/">
+<link rel="alternate" hreflang="zh-Hans" href="https://ming053l.github.io/ReLoopVSR/zh-Hans/">
+<link rel="alternate" hreflang="zh-Hant" href="https://ming053l.github.io/ReLoopVSR/zh-Hant/">
+<link rel="alternate" hreflang="ja" href="https://ming053l.github.io/ReLoopVSR/ja/">
+<link rel="alternate" hreflang="ko" href="https://ming053l.github.io/ReLoopVSR/ko/">
+<link rel="alternate" hreflang="x-default" href="https://ming053l.github.io/ReLoopVSR/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ReLoopVSR">
+<meta property="og:title" content="ReLoopVSR: One-Step Recurrent Autoregressive Diffusion Refinement for Streaming Video Super-Resolution">
+<meta property="og:description" content="ReLoopVSR: One-Step Recurrent Autoregressive Diffusion Refinement for Streaming Video Super-Resolution. Results, method, cost and benchmarks.">
+<meta property="og:url" content="https://ming053l.github.io/ReLoopVSR/">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="zh_CN">
+<meta property="og:locale:alternate" content="zh_TW">
+<meta property="og:locale:alternate" content="ja_JP">
+<meta property="og:locale:alternate" content="ko_KR">
+<!--/i18n-head-->
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237CB696'/%3E%3Cpath d='M23 11a9 9 0 1 0 1.6 7' fill='none' stroke='%2327323c' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='m25 6-1 6.6-6.4-1.6' fill='none' stroke='%2327323c' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script>try{var t=localStorage.getItem('dv-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
-<link rel="stylesheet" href="assets/style.css?v=20261118z">
+<link rel="stylesheet" href="assets/style.css?v=20261118i18n">
 <link rel="stylesheet" href="assets/schematic.css?v=20261110c">
 <style>#race-chips{grid-column:1/-1;grid-template-columns:repeat(5,minmax(0,1fr));margin-top:0}@media (max-width:760px){#race-chips{grid-template-columns:repeat(2,minmax(0,1fr))}}.rp.oom .rv{opacity:.55}.race-ctl .seg+.seg{margin-left:4px}.note.illus{font-size:12px;text-align:center;margin:6px auto 10px;max-width:none}#race-cap{margin-top:4px;font-size:13px;color:var(--ink-2)}.seg[data-g=res] button,.seg[data-g=k] button{width:auto;min-width:44px;padding:0 9px}</style>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <header class="nav"><div class="wrap">
-  <a class="brand" href="#top" aria-label="ReLoopVSR, back to top">
+  <a class="brand" translate="no" href="#top" aria-label="ReLoopVSR, back to top">
     <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#7CB696"/><path d="M23 11a9 9 0 1 0 1.6 7" fill="none" stroke="#27323c" stroke-width="3" stroke-linecap="round"/><path d="m25 6-1 6.6-6.4-1.6" fill="none" stroke="#27323c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span>ReLoop<b>VSR</b></span></a>
   <nav class="links" aria-label="Sections">
     <a href="#results">Results</a><a href="#method">Method</a><a href="#fast">Fast</a><a href="#performance">Performance</a><a href="#benchmarks">Benchmarks</a><a href="#temporal">Temporal</a><a href="#faq">FAQ</a><a href="#citation">Citation</a>
   </nav>
+  <!--i18n-switcher--><details class="lang" id="lang" translate="no"><summary aria-label="Language: English" title="Language"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9M12 3c-2.5 2.6-3.8 5.6-3.8 9s1.3 6.4 3.8 9"/></svg><span>EN</span><svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg></summary><ul class="lang-menu"><li><a href="./" hreflang="en" lang="en" aria-current="page"><b>EN</b>English</a></li><li><a href="zh-Hans/" hreflang="zh-Hans" lang="zh-Hans"><b>简</b>简体中文</a></li><li><a href="zh-Hant/" hreflang="zh-Hant" lang="zh-Hant"><b>繁</b>繁體中文</a></li><li><a href="ja/" hreflang="ja" lang="ja"><b>日</b>日本語</a></li><li><a href="ko/" hreflang="ko" lang="ko"><b>한</b>한국어</a></li></ul></details><!--/i18n-switcher-->
   <button class="icon-btn" id="theme" type="button" aria-label="Toggle theme">
     <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
     <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z"/></svg>
@@ -34,8 +54,8 @@
   <div class="hero-fade" aria-hidden="true"></div>
   <div class="hero-inner wrap"><div class="hero-text">
     <h1 class="hero-title"><em>ReLoopVSR</em><span class="vh">: </span><span class="hero-sub"><span class="nb">One-Step</span> Recurrent Autoregressive Diffusion Refinement for Streaming Video Super-Resolution</span></h1>
-    <p class="authors"><a href="https://ming053l.github.io/" target="_blank" rel="noopener">Chia-Ming Lee</a><sup>1,2</sup>, <a href="https://mingching.github.io/" target="_blank" rel="noopener">Ming-Ching Chang</a><sup>1</sup>, <a href="https://scholar.google.com/citations?user=gMBvzGoAAAAJ&amp;hl=en" target="_blank" rel="noopener">Xin Li</a><sup>1</sup>, <a href="https://yulunalexliu.github.io/" target="_blank" rel="noopener">Yu-Lun Liu</a><sup>2</sup>, <a href="https://cchsu.info/" target="_blank" rel="noopener">Chih-Chung Hsu</a><sup>2</sup></p>
-    <p class="affil"><span><sup>1</sup>University at Albany, SUNY</span>&nbsp;&nbsp;&nbsp; <span><sup>2</sup>National Yang Ming Chiao Tung University</span></p>
+    <p class="authors" translate="no"><a href="https://ming053l.github.io/" target="_blank" rel="noopener">Chia-Ming Lee</a><sup>1,2</sup>, <a href="https://mingching.github.io/" target="_blank" rel="noopener">Ming-Ching Chang</a><sup>1</sup>, <a href="https://scholar.google.com/citations?user=gMBvzGoAAAAJ&amp;hl=en" target="_blank" rel="noopener">Xin Li</a><sup>1</sup>, <a href="https://yulunalexliu.github.io/" target="_blank" rel="noopener">Yu-Lun Liu</a><sup>2</sup>, <a href="https://cchsu.info/" target="_blank" rel="noopener">Chih-Chung Hsu</a><sup>2</sup></p>
+    <p class="affil" translate="no"><span><sup>1</sup>University at Albany, SUNY</span>&nbsp;&nbsp;&nbsp; <span><sup>2</sup>National Yang Ming Chiao Tung University</span></p>
     <p class="lede">ReLoopVSR restores a video stream without future frames, in one denoising step per frame. It aligns and re-noises the previous restoration, refines it with the current low-resolution frame, and restarts wherever errors are predicted or the scene cuts. It leads in perceptual quality with far lower memory and latency, and ReLoopVSR-fast exceeds 240 FPS at 720p.</p>
     <div class="btns">
       <a class="btn btn-p" href="#results">See the results</a>
@@ -234,7 +254,7 @@
 
 <section id="citation"><div class="wrap">
   <div class="head"><p class="eyebrow">Citation</p><h2>Cite this work</h2><p>Venue and links will be added later.</p></div>
-  <div class="bib"><pre id="bibtex" tabindex="0">@misc{reloopvsr,
+  <div class="bib"><pre id="bibtex" tabindex="0" translate="no">@misc{reloopvsr,
   title  = {ReLoopVSR: One-Step Recurrent Autoregressive Diffusion
             Refinement for Streaming Video Super-Resolution},
   author = {Lee, Chia-Ming and Chang, Ming-Ching and Li, Xin and Liu, Yu-Lun and Hsu, Chih-Chung},
@@ -251,12 +271,12 @@
 </div></section>
 </main>
 <footer><div class="wrap">
-  <span class="brand" style="font-size:1rem">ReLoop<b style="color:var(--accent-ink)">VSR</b></span>
+  <span class="brand" translate="no" style="font-size:1rem">ReLoop<b style="color:var(--accent-ink)">VSR</b></span>
   <p>Test material: REDS4, YouHQ40, the LongAIGC-8 videos and VideoLQ, as used in the paper, shown for research comparison. <i>Tears of Steel</i> (CC) Blender Foundation.</p>
   <p>Numbers come from the paper's tables. This page loads no external resources and collects no data. Fonts: Inter and JetBrains Mono, SIL Open Font License (see assets/fonts).</p>
 </div></footer>
 <script src="assets/data.js?v=20261118t" defer></script>
-<script src="assets/schematic.js?v=20261118" defer></script>
-<script src="assets/app.js?v=20261118s" defer></script>
+<script src="assets/schematic.js?v=20261118i18n" defer></script>
+<script src="assets/app.js?v=20261118i18n" defer></script>
 </body>
 </html>

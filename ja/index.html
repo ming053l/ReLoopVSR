@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ReLoopVSR：ストリーミング動画超解像のための1ステップ再帰的自己回帰拡散リファインメント</title>
+<meta name="description" content="ReLoopVSR：ストリーミング動画超解像のための1ステップ再帰的自己回帰拡散リファインメント。結果、手法、計算コスト、ベンチマーク。">
+<meta name="robots" content="noindex">
+<!--i18n-head-->
+<link rel="canonical" href="https://ming053l.github.io/ReLoopVSR/ja/">
+<link rel="alternate" hreflang="en" href="https://ming053l.github.io/ReLoopVSR/">
+<link rel="alternate" hreflang="zh-Hans" href="https://ming053l.github.io/ReLoopVSR/zh-Hans/">
+<link rel="alternate" hreflang="zh-Hant" href="https://ming053l.github.io/ReLoopVSR/zh-Hant/">
+<link rel="alternate" hreflang="ja" href="https://ming053l.github.io/ReLoopVSR/ja/">
+<link rel="alternate" hreflang="ko" href="https://ming053l.github.io/ReLoopVSR/ko/">
+<link rel="alternate" hreflang="x-default" href="https://ming053l.github.io/ReLoopVSR/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ReLoopVSR">
+<meta property="og:title" content="ReLoopVSR：ストリーミング動画超解像のための1ステップ再帰的自己回帰拡散リファインメント">
+<meta property="og:description" content="ReLoopVSR：ストリーミング動画超解像のための1ステップ再帰的自己回帰拡散リファインメント。結果、手法、計算コスト、ベンチマーク。">
+<meta property="og:url" content="https://ming053l.github.io/ReLoopVSR/ja/">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale:alternate" content="zh_CN">
+<meta property="og:locale:alternate" content="zh_TW">
+<meta property="og:locale:alternate" content="ko_KR">
+<!--/i18n-head-->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237CB696'/%3E%3Cpath d='M23 11a9 9 0 1 0 1.6 7' fill='none' stroke='%2327323c' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='m25 6-1 6.6-6.4-1.6' fill='none' stroke='%2327323c' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script>try{var t=localStorage.getItem('dv-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<link rel="stylesheet" href="../assets/style.css?v=20261118i18n">
+<link rel="stylesheet" href="../assets/schematic.css?v=20261110c">
+<style>#race-chips{grid-column:1/-1;grid-template-columns:repeat(5,minmax(0,1fr));margin-top:0}@media (max-width:760px){#race-chips{grid-template-columns:repeat(2,minmax(0,1fr))}}.rp.oom .rv{opacity:.55}.race-ctl .seg+.seg{margin-left:4px}.note.illus{font-size:12px;text-align:center;margin:6px auto 10px;max-width:none}#race-cap{margin-top:4px;font-size:13px;color:var(--ink-2)}.seg[data-g=res] button,.seg[data-g=k] button{width:auto;min-width:44px;padding:0 9px}</style>
+</head>
+<body>
+<a class="skip" href="#main">本文へスキップ</a>
+<header class="nav"><div class="wrap">
+  <a class="brand" translate="no" href="#top" aria-label="ReLoopVSR、ページ先頭へ">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#7CB696"/><path d="M23 11a9 9 0 1 0 1.6 7" fill="none" stroke="#27323c" stroke-width="3" stroke-linecap="round"/><path d="m25 6-1 6.6-6.4-1.6" fill="none" stroke="#27323c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>ReLoop<b>VSR</b></span></a>
+  <nav class="links" aria-label="セクション">
+    <a href="#results">結果</a><a href="#method">手法</a><a href="#fast">高速版</a><a href="#performance">性能</a><a href="#benchmarks">定量比較</a><a href="#temporal">時間特性</a><a href="#faq">FAQ</a><a href="#citation">引用</a>
+  </nav>
+  <!--i18n-switcher--><details class="lang" id="lang" translate="no"><summary aria-label="言語: 日本語" title="言語"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9M12 3c-2.5 2.6-3.8 5.6-3.8 9s1.3 6.4 3.8 9"/></svg><span>日</span><svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg></summary><ul class="lang-menu"><li><a href="../" hreflang="en" lang="en"><b>EN</b>English</a></li><li><a href="../zh-Hans/" hreflang="zh-Hans" lang="zh-Hans"><b>简</b>简体中文</a></li><li><a href="../zh-Hant/" hreflang="zh-Hant" lang="zh-Hant"><b>繁</b>繁體中文</a></li><li><a href="../ja/" hreflang="ja" lang="ja" aria-current="page"><b>日</b>日本語</a></li><li><a href="../ko/" hreflang="ko" lang="ko"><b>한</b>한국어</a></li></ul></details><!--/i18n-switcher-->
+  <button class="icon-btn" id="theme" type="button" aria-label="テーマ切替">
+    <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z"/></svg>
+  </button>
+</div></header>
+<div id="tip" hidden></div>
+
+<main id="main">
+<div class="hero" id="top">
+  <div class="hero-view" data-clip="hero" data-desc="Inter4K の4クリップ（都市の空撮、ハニカム状の階段、バラ）。バイキュービック拡大した入力と ReLoopVSR の出力に分割して表示"><img class="hero-poster" src="../media/poster/hero_split.webp?v=20261118r" width="1920" height="1080" alt="" fetchpriority="high" decoding="async"></div>
+  <div class="hero-fade" aria-hidden="true"></div>
+  <div class="hero-inner wrap"><div class="hero-text">
+    <h1 class="hero-title"><em>ReLoopVSR</em><span class="vh">：</span><span class="hero-sub">ストリーミング動画超解像のための<span class="nb">1ステップ</span>再帰的自己回帰拡散リファインメント</span></h1>
+    <p class="authors" translate="no"><a href="https://ming053l.github.io/" target="_blank" rel="noopener">Chia-Ming Lee</a><sup>1,2</sup>, <a href="https://mingching.github.io/" target="_blank" rel="noopener">Ming-Ching Chang</a><sup>1</sup>, <a href="https://scholar.google.com/citations?user=gMBvzGoAAAAJ&amp;hl=en" target="_blank" rel="noopener">Xin Li</a><sup>1</sup>, <a href="https://yulunalexliu.github.io/" target="_blank" rel="noopener">Yu-Lun Liu</a><sup>2</sup>, <a href="https://cchsu.info/" target="_blank" rel="noopener">Chih-Chung Hsu</a><sup>2</sup></p>
+    <p class="affil" translate="no"><span><sup>1</sup>University at Albany, SUNY</span>&nbsp;&nbsp;&nbsp; <span><sup>2</sup>National Yang Ming Chiao Tung University</span></p>
+    <p class="lede">ReLoopVSR は未来フレームを用いず、1フレームあたり1回のノイズ除去ステップで動画ストリームを復元する。前フレームの復元結果を位置合わせして再ノイズ付加し、現在の低解像度フレームでリファインし、誤差が予測される箇所やシーンカットでは再始動する。知覚品質で首位に立ちながらメモリとレイテンシを大幅に抑え、ReLoopVSR-fast は 720p で 240 FPS を超える。</p>
+    <div class="btns">
+      <a class="btn btn-p" href="#results">結果を見る</a>
+      <a class="btn btn-s" href="#benchmarks">数値を見る</a>
+      <button class="btn" type="button" disabled>論文を読む <small>近日公開</small></button>
+    </div>
+  <div class="stats hero-stats" role="list" aria-label="主な実測値">
+    <div role="listitem"><b>0 フレーム</b><span>未来フレームへの依存</span></div>
+    <div role="listitem"><b>0.04 s</b><span>初回フレームまでの時間（半精度）</span></div>
+    <div role="listitem"><b>240+ FPS</b><span>720p での ReLoopVSR-fast</span></div>
+    <div role="listitem"><b>28+ FPS</b><span>4K での ReLoopVSR-fast</span></div>
+    <div role="listitem"><b>2.2 GiB</b><span>720p でのピークメモリ</span></div>
+  </div>
+  </div></div>
+  <div class="hero-cap"><button class="play" id="hero-play" type="button" aria-label="このクリップを一時停止"><svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M2 1h3v10H2zM7 1h3v10H7z"/></svg><span>一時停止</span></button><span id="hero-cap"><b>Inter4K の4クリップ</b> · 左：バイキュービック入力 · 右：ReLoopVSR（×4）</span></div>
+  <a class="scroll-cue" href="#race" aria-label="スピードレースへスクロール"><span></span></a>
+</div>
+<div class="hero-after"><div class="wrap">
+  <section class="race" id="race" aria-labelledby="race-h">
+    <div class="race-top">
+      <h2 id="race-h" class="race-title">同じ100フレーム、共通の時計、720p〜4K</h2>
+      <div class="clock"><span class="vh">計測された経過時間：</span><b id="race-clock">0.0 s</b><span id="race-speed-note" class="pill">1× 速度</span></div>
+      <div class="race-ctl">
+        <div class="seg" data-g="res" role="group" aria-label="計時に用いた出力解像度"><button type="button" aria-pressed="true">720p</button><button type="button" aria-pressed="false">1080p</button><button type="button" aria-pressed="false">1440p</button><button type="button" aria-pressed="false">4K</button></div>
+        <div class="seg" data-g="k" role="group" aria-label="ReLoopVSR-fast のキーフレーム間隔"><button type="button" aria-pressed="false">K=4</button><button type="button" aria-pressed="false">K=8</button><button type="button" aria-pressed="false">K=12</button><button type="button" aria-pressed="false">K=16</button><button type="button" aria-pressed="true">K=20</button></div>
+        <div class="seg" data-g="speed" role="group" aria-label="レースの再生速度"><button type="button" data-s="1" aria-pressed="true">1×</button><button type="button" data-s="4" aria-pressed="false">4×</button><button type="button" data-s="16" aria-pressed="false">16×</button></div>
+        <button class="play" id="race-pause" type="button">一時停止</button><button class="play" id="race-replay" type="button">リプレイ</button>
+      </div>
+    </div>
+    <div class="race-grid">
+      <div class="rp rp-in" data-m="input"><div class="rv"><video muted playsinline preload="none" poster="../media/poster/race_input.webp" tabindex="-1" aria-label="入力ストリーム、REDS4 クリップ 000、バイキュービック拡大" data-src="../media/race/input.mp4"></video><span class="rn">入力（バイキュービック）</span></div>
+        <div class="rm"><div class="rb"><i></i></div><p><b class="rc">0 / 100</b> <span id="race-in-note">ReLoopVSR が復元中のフレームと同じ。</span></p></div></div>
+      <div class="rps" id="race-panels"></div>
+      <div class="chips" id="race-chips" aria-label="その他の評価手法（カウンタのみ）"></div>
+    </div>
+    <p class="race-label">RTX PRO 6000 1枚、×4、半精度（論文の表7）。REDS4 クリップ 000 を以前のチェックポイントで復元した説明用の再生。</p>
+    <p id="race-cap" aria-live="polite"></p>
+    <p class="vh">720p では、ReLoopVSR-fast は 0.04 s で最初のフレームを表示し、249 FPS で動作する。</p>
+  </section>
+  <noscript><p class="note">比較スライダー、グラフ、表には JavaScript が必要。論文の図と本文はそのまま読める。</p></noscript>
+  <figure class="fig-wrap teaser"><div class="fig"><a href="../assets/fig/teaser_top.webp?v=20261117f"><img src="../assets/fig/teaser_top.webp?v=20261117f" width="2400" height="1252" loading="lazy" decoding="async" alt="左：960×540 入力から得た ReLoopVSR の 4K 出力2例を入力と分割表示し、それぞれ「720p で 240+ FPS」「4K で 28+ FPS」とラベル付け。中央：FlashVSR-Tiny、InfVSR、ReLoopVSR、正解の切り出し。右：パラメータ数をバブルの大きさとした LPIPS 対 FPS（ReLoopVSR と K=4〜20 の高速設定は低 LPIPS・高 FPS に位置する）、手法ごとの初回フレームまでの時間（ReLoopVSR は FP32 で 0.22 s、FP16 で 0.04 s）、720p〜4K のピークメモリ（ReLoopVSR は 2.1〜11.6 GiB）。"></a></div>
+    <figcaption><b>ReLoopVSR によるストリーミング動画超解像</b>（論文の図1）。ReLoopVSR は前フレームの復元結果を伝播し、1回のノイズ除去ステップで現在の観測を用いてリファインする。競争力のある忠実度、時間的一貫性、スループットを備えつつ、未来フレームへの依存はゼロで、評価した手法の中で実測の初回フレームまでの時間が最短、ピークメモリ使用量が最小である。</figcaption></figure>
+</div></div>
+
+<section id="results"><div class="wrap">
+  <div class="head"><p class="eyebrow">結果</p><h2>入力と ReLoopVSR の並列比較</h2>
+  <p>すべてのクリップは ×4。左側がバイキュービック拡大した低解像度入力、右側が ReLoopVSR。両側は1つの動画ファイルに収められているため、常に同じフレームを表示する。</p></div>
+  <p class="note illus"><b>説明用のみ：</b>以前のチェックポイントで復元したもので、論文の評価には含まれない。</p>
+  <div id="show-tabs" class="tabs"></div>
+  <div id="showcase" class="grid2">
+    <article class="card" data-ds="REDS4"><div class="cmp" data-clip="reds_011" data-desc="伝統的な塀に囲まれた路地と柄物のドレスを着た来訪者、REDS4 クリップ 011" data-cap="<b>REDS4 クリップ 011</b>。1280×720、24 fps で100フレーム。"></div></article>
+    <article class="card" data-ds="REDS4"><div class="cmp" data-clip="reds_020" data-desc="絵画を並べた露店と通行人、REDS4 クリップ 020" data-cap="<b>REDS4 クリップ 020</b>。1280×720、24 fps で100フレーム。"></div></article>
+    <article class="card" data-ds="YouHQ40"><div class="cmp" data-clip="youhq_018" data-desc="道路沿いに縞模様の日除けが並ぶホテルの外観、YouHQ40 クリップ 018" data-cap="<b>YouHQ40 クリップ 018</b>。1920×1080、全33フレーム、12 fps で表示。"></div></article>
+    <article class="card" data-ds="YouHQ40"><div class="cmp" data-clip="youhq_019" data-desc="高層ビルが並ぶ都市の空撮、YouHQ40 クリップ 019" data-cap="<b>YouHQ40 クリップ 019</b>。1920×1080、全33フレーム、12 fps で表示。このセット唯一のシーンカットを第17フレームに含む。"></div></article>
+    <article class="card" data-ds="Tears of Steel"><div class="cmp" data-clip="tos_dialog" data-desc="映画 Tears of Steel のショット、機械装置を構える男性" data-cap="<b>Tears of Steel、会話の抜粋</b>。1280×720、第41–164フレーム、24 fps、第85フレームにカットあり。"></div></article>
+    <article class="card" data-ds="Tears of Steel"><div class="cmp" data-clip="tos_room1" data-desc="映画 Tears of Steel のショット、手すりの陰にいる兵士" data-cap="<b>Tears of Steel、室内の抜粋</b>。1280×720、最初の144フレーム、24 fps、第60・124フレームにカットあり。"></div></article>
+    <article class="card" data-ds="VideoLQ"><div class="cmp" data-clip="vlq_013" data-desc="店の看板とれんが造りの建物が並ぶ通り、実世界 VideoLQ クリップ 013" data-cap="<b>VideoLQ クリップ 013</b>、実世界向けにファインチューニングしたチェックポイント。2560×1440 の出力を、ここでは 1920×1080 に縮小して表示。VideoLQ には正解がないため、細部は真の内容ではなく、もっともらしい内容である可能性がある。"></div></article>
+    <article class="card" data-ds="VideoLQ"><div class="cmp" data-clip="vlq_005" data-desc="彩色された建物の前に立つ錬鉄製の街灯、実世界 VideoLQ クリップ 005" data-cap="<b>VideoLQ クリップ 005</b>、実世界向けにファインチューニングしたチェックポイント。1280×960、24 fps で100フレーム。VideoLQ には正解がないため、細部は真の内容ではなく、もっともらしい内容である可能性がある。"></div></article>
+  </div>
+</div></section>
+
+<section id="method" class="alt"><div class="wrap">
+  <div class="head"><p class="eyebrow">手法</p><h2>再帰的自己回帰リファインメント</h2>
+  <p>ストリーミング VSR は、低解像度の観測が到着するたびに、未来フレームを用いず、フレームごとの限られた計算予算内で高解像度フレームを再構成する。動き補償後には、すでに復元した内容が現在フレームの推定となっているため、ReLoopVSR は各フレームをノイズから生成するのではなく、その推定を補正する。フレーム <i>k</i> の出力は、現在の低解像度入力と、潜在表現・RGB 出力・デコーダ特徴をキャッシュする固定サイズの再帰状態のみに依存する。</p>
+  <ul><li>直前のノイズ除去済み潜在表現は現在フレームに位置合わせされ、継承した細部を修正できるよう再ノイズ付加されたのち、現在の観測を条件とする1回のノイズ除去ステップでリファインされる。時間的に対応する内容への更新の繰り返しは時空間モメンタムを形成し、パラメータを固定したまま実効的な計算深さを拡張する。</li><li>しかし、位置合わせ誤差、ディスオクルージョン、照明変化、シーンカットは継承した内容を無効にし、誤差スパイクを引き起こす。そこで局所・大域の信頼性制御がこのモメンタムを逐次打ち切り、信頼できないタイルを現在の LR 観測から再始動し、大域的な変化では状態全体をリセットする。</li><li>各出力が次フレームの出発点となるため、モデルは自身のストリーミングロールアウトで学習され、続いて知覚的な時間的教師信号を用いて学習される。これにより、継承した誤差を補正することを学ぶ。</li></ul></div>
+  <figure class="sch" id="schematic" aria-label="3種類の手法がフレーム k をどのように生成するかを比較するアニメーション模式図"></figure>
+  <figure class="fig-wrap"><div class="fig"><a href="../assets/fig/method.webp?v=20261117f"><img src="../assets/fig/method.webp?v=20261117f" width="2400" height="838" loading="lazy" decoding="async" alt="連続フレームにわたるパイプライン。各行では、直前のノイズ除去済み潜在表現をオプティカルフローでフレーム k へワープし、信頼性制御により信頼できるタイルを保持するか、残りを符号化した LR フレームから再始動し、結果を再ノイズ付加して共有の1ステップのノイズ除去でリファインし、キャッシュしたデコーダ特徴でデコードする。アダプタは直前の出力からのガイダンスを伝える。シーンカットでは状態をリセットする。"></a></div>
+    <figcaption><b>ReLoopVSR における再帰的自己回帰リファインメント</b>（論文の図3）。共有の1ステップデノイザが、前フレームの復元結果から各フレームを復元する。ノイズ除去済み潜在表現をフレーム <i>k</i> へワープし、再ノイズ付加し、現在の LR フレームでリファインする一方、アダプタとキャッシュしたデコーダ特徴が直前の出力からのガイダンスを伝える。信頼性制御（DEN）は信頼できるタイルを保持し、信頼できないタイルを符号化した LR フレームから再始動し、シーンカットでは状態全体をリセットする。</figcaption></figure>
+
+  <div style="margin-top:36px">
+  <div class="feature"><div class="ft"><span class="num">01</span><h3>潜在空間での再帰的リファインメント</h3>
+    <p>ReLoopVSR は前フレームの復元結果を初期推定として用いる。バイキュービックで ×4 拡大した現在と直前の LR 入力の間のオプティカルフローにより、キャッシュしたノイズ除去済み潜在表現をフレーム <i>k</i> に位置合わせする。位置合わせした潜在表現は中間レベルまで再ノイズ付加され、1回のノイズ除去ステップでリファインされ、リファイン後の潜在表現が次フレームのための状態としてキャッシュされる。</p>
+    <ul><li>SDEdit や ResShift と同様に、再ノイズ付加により現在の観測が継承した細部を修正できる。これに対し Stream-DiffVSR は、4ステップの各軌道をノイズから開始し、前フレームの復元結果を条件としてのみ用いる。</li><li>この設計はループ型 Transformer に着想を得ている。ループ型 Transformer は反復間で共有パラメータを再利用し、コンパクトなモデルで実効的な深さを増やす。ここでは反復がフレーム方向に進み、1フレームあたり1回のノイズ除去ステップで行われる。</li><li>YouHQ40 と REDS4 では、伝播した潜在表現の代わりに符号化した LR から開始すると、空間的な指標はほぼ変わらないが tLP が 12% 上昇し、再帰状態全体を除去すると tLP が最も大きく上昇する（0.596 から 1.093）。</li></ul></div>
+    <figure class="fig-wrap"><div class="fig"><a href="../assets/fig/recurrent_refinement_schematic.webp?v=20261117f"><img src="../assets/fig/recurrent_refinement_schematic.webp?v=20261117f" width="1600" height="943" loading="lazy" decoding="async" alt="上：2つのシーンカットを含むフィルムストリップ。ReLoopVSR は直近のカット以降の現在と過去のフレームを用いる一方、チャンク型 DiT はカットをまたいで n 枚の未来フレームをバッファする。下：ReLoopVSR は LR フローで直前の出力をワープし、位置合わせした結果を再ノイズ付加し、現在の LR フレームを用いて蒸留済みの1ステップでリファインし、新しい出力を再帰的リファインメントとしてフィードバックする。"></a></div>
+    <figcaption><b>ストリーミング入力と再帰的リファインメント</b>（論文の図2）。チャンク型 DiT 手法は <i>n</i> 枚の未来フレームをバッファするため、レイテンシが増え、カットをまたいで無関係な内容が混ざる。ReLoopVSR は直近のカット以降の現在と過去のフレームのみを用い、再帰的リファインメントにより自己回帰的に時空間モメンタムを構築する。</figcaption></figure></div>
+
+  <div class="feature"><div class="ft"><span class="num">02</span><h3>局所・大域の信頼性制御</h3>
+    <p>一貫したシーンでは、伝播した復元結果がコンパクトなモデルを強化するが、動く人物のような局所的な不整合や、照明変化・シーンカットのような大域的な不整合は、伝播されると誤差スパイクを引き起こす。そこで軽量な Dynamic Estimation Network（DEN）が、現在の LR 入力、ワープした直前の LR 入力、位置合わせした潜在表現から、位置合わせした潜在表現の復元誤差を予測する。</p>
+    <ul><li>局所的には、予測誤差の低いタイルは位置合わせした復元結果を保持し、残りのタイルはバイキュービック拡大した観測を符号化したものから再始動する。両者は1回のノイズ除去ステップを共有するため、再始動によってデノイザの評価回数は増えない。</li><li>大域的には、信頼できないタイルがフレームの半分以上を占め、かつ LR の大域的な見た目の変化が検出されたときに、状態全体をリセットする。リセットは時間的条件とフローのウォームスタートも消去し、未来フレームを必要としない。</li><li>信頼性制御を無効にすると、29 件のカットにおける LPIPS が 0.0820 から 0.1088 に上昇する。したがって、この効果は全体リセットによるものである。</li></ul></div>
+    <figure class="fig-wrap"><div class="fig"><a href="../assets/fig/den_motivation.webp?v=20261117f"><img src="../assets/fig/den_motivation.webp?v=20261117f" width="1600" height="679" loading="lazy" decoding="async" alt="信頼性制御の図解。局所的には、信頼できるタイルは位置合わせした復元結果を保持し、信頼できないタイルは現在の LR 観測から再始動する。大域的には、シーンカットで状態をリセットし、時間的条件を消去する。"></a></div>
+    <figcaption><b>局所・大域の信頼性制御</b>（論文の図4）。局所的には、信頼できるタイルは位置合わせした復元結果を保持し、信頼できないタイルはモメンタムを止めて現在の LR 観測から再始動する。大域的には、シーンカットによるリセットで時間的条件も消去する。</figcaption></figure></div>
+
+  <div class="feature wide"><div class="ft"><span class="num">03</span><h3>再帰的リファインメントの学習</h3>
+    <p>バックボーンは、フレームごとの固定予算内でこの定式化に合わせて、空間適応、1ステップ蒸留、セルフロールアウト・ファインチューニング、時間的ファインチューニングの4段階で学習する。</p>
+    <ul><li>空間適応では、空間的に変化する劣化を含む再ノイズ付加済みの伝播推定をリファインするよう U-Net を学習させ、1ステップ蒸留では共有の初期潜在表現からフレーム内リファインメントを圧縮する。</li><li>セルフロールアウト・ファインチューニングでは、再始動、リセット、キャッシュしたデコーダ特徴を含む、勾配を切り離したモデル生成のストリーミング状態を、凍結した初期スチューデントと対比しながら再生し、デノイザ、アダプタ、時間デコーダを交互に更新する。フローでマスクした一貫性損失が時間的残差を正解に合わせ、参照なし品質項として MUSIQ と CLIP-IQA を加える。</li><li>続く時間的ファインチューニングでは、ショット内のフレーム間の知覚的変化の大きさを正解に合わせる損失を加える。REDS4 では tLP が 0.682 から 0.301 に低下する。</li></ul></div>
+    <figure class="fig-wrap"><div class="fig"><a href="../assets/fig/fig5_distill.webp?v=20261117f"><img src="../assets/fig/fig5_distill.webp?v=20261117f" width="2400" height="1132" loading="lazy" decoding="async" alt="3パネルからなる学習手順：4ステップの教師に対する空間適応、同じ開始点からの2ステップの教師に対する1ステップ蒸留、そして切り離したセルフロールアウト記録上でデノイザ・アダプタ・時間デコーダを交互に更新するセルフロールアウト・ファインチューニング（凍結した初期スチューデントを参照とし、ロールアウト損失と正解フローに沿った一貫性損失を用いる）。"></a></div>
+    <figcaption><b>ReLoopVSR の学習手順</b>（論文の図5）。(a) 空間適応では、再ノイズ付加した伝播推定をリファインするよう U-Net を学習する。(b) 1ステップ蒸留では、共有の初期潜在表現を用いてフレーム内リファインメントを圧縮する。(c) セルフロールアウト・ファインチューニングでは、凍結した初期スチューデントを参照として、切り離したモデル生成状態上でデノイザ、アダプタ、時間デコーダを交互に更新する。</figcaption></figure></div>
+
+  <div class="feature"><div class="ft"><span class="num">04</span><h3>軽量な時間モジュール</h3>
+    <p>初期潜在表現はすでに復元済みの内容を含むため、時間的ガイダンスはそのリファインに専念できる。直前の RGB 出力から特徴を再抽出する ControlNet 型エンコーダは1ステップのノイズ除去に比べて非常に高コストであるため、ReLoopVSR は代わりにコンパクトなアダプタとキャッシュしたデコーダ特徴を用いる。</p>
+    <ul><li>畳み込み型の時間アダプタ（25.7M パラメータ）は、デノイザ入力、ワープした直前の出力、DEN マップを受け取り、13 個の残差を出力する。DEN マップから予測したゲートが信頼できない領域でガイダンスを弱め、アダプタは最初のフレームとカットではバイパスされる。</li><li>時間デコーダは、キャッシュしたブロック特徴をゼロ初期化した残差を通じて位置合わせ・融合する。これにより直前の RGB 出力からの再抽出を避け、高解像度でのコストを抑える。</li></ul></div>
+    <figure class="fig-wrap narrow"><div class="fig"><a href="../assets/fig/adapter_style.webp?v=20261117f"><img src="../assets/fig/adapter_style.webp?v=20261117f" width="1600" height="2281" loading="lazy" decoding="async" alt="時間アダプタ、ワープしたキャッシュ特徴を用いる時間デコーダ、非キーフレーム用の高速デコーダ、DEN 誤差予測器、シーンカットリセットを伴うタイル選択のブロック図。"></a></div>
+    <figcaption><b>時間モジュールと信頼性制御</b>（補足資料）。(a) 信頼度とノイズレベルを条件とするアダプタ。(b) ワープしたキャッシュ特徴を融合するデコーダ。(c) 非キーフレーム用の高速デコーダ。(d) 位置合わせした潜在表現の誤差を予測する DEN。(e) タイル選択とシーンカットリセット。</figcaption></figure></div>
+  </div>
+</div></section>
+
+<section id="fast"><div class="wrap">
+  <div class="head"><p class="eyebrow">ReLoopVSR-fast</p><h2>キーフレームを間引いたストリーミング推論</h2>
+  <p>隣接フレームは時間的に冗長なため、ほとんどのフレームは新たな拡散ステップなしに再帰状態から更新できる。SlowFast ネットワークの考え方にならい、ReLoopVSR-fast は1ステップ拡散をキーフレームにのみ適用し、その間のフレームは、現在の LR 入力とゲート付きで位置合わせした履歴を用いる軽量な高速デコーダで復元する。因果性を保ち、各フレームを即座に出力する。</p>
+  <ul><li>キーフレームは最初のフレームから始まり、公称間隔 <i>K</i> で繰り返される。LR の見た目が変化するとキーフレームが前倒しされ、すべてのキーフレームで信頼性制御を用いる。<i>K</i>=0 は ReLoopVSR-base を表す。</li><li><i>K</i> を大きくすると、忠実度をいくらか犠牲にして、デノイザのコストをより多くのフレームに償却できる。学習はベースのレシピに従い、高速デコーダには通時的誤差逆伝播（BPTT）を加える。</li></ul></div>
+  <figure class="fig-wrap narrow"><div class="fig"><a href="../assets/fig/fast_inference.webp?v=20261117f"><img src="../assets/fig/fast_inference.webp?v=20261117f" width="1600" height="703" loading="lazy" decoding="async" alt="連続する5フレーム k〜k+4。フレーム k と k+4 は1ステップ拡散を通り、潜在表現・RGB・特徴のキーフレームキャッシュを更新する。フレーム k+1〜k+3 は、現在の LR フレーム、合成フローで位置合わせしたキーフレーム参照、直前の RGB 出力を受け取る高速デコーダを用いる。赤い矢印は高速デコーダのフレームにわたる BPTT 勾配を示す。"></a></div>
+    <figcaption><b>高速ストリーミング推論</b>（<i>K</i>=4 の例、論文の図6）。拡散による更新がキーフレームキャッシュを更新し、軽量な高速デコーダが間のフレームを復元する。青い経路は合成フローでキャッシュ参照を位置合わせし、灰色の経路は直前の RGB 出力を運び、赤い矢印は高速デコーダのファインチューニングに用いる BPTT 勾配を示す。LR の見た目の変化によってキーフレームが前倒しされることがある。</figcaption></figure>
+  <div class="sub"><p class="eyebrow">論文の表3</p><h3>高速化ストリーミング VSR 手法との比較</h3>
+  <p class="note">半精度では、ReLoopVSR-fast は未来フレームを参照せずに <i>K</i>=4 の 85.7 FPS から <i>K</i>=20 の 249.4 FPS で動作し、競合するどの手法よりも高速である（RelayVSR の最大 4.0×）。5つの設定はいずれも、すべての全参照指標・時間的指標および CLIP-IQA でもこれらの手法を上回る。ReLoopVSR-base と比べると、<i>K</i>=16 では LPIPS が 0.0864 から 0.1030 に、tLP が 0.210 から 0.374 に上昇する代わりに、スループットが 13× に向上する。</p></div>
+  <div class="legend"><span><i style="background:#7CB696"></i>1位</span><span><i style="background:#BEDBBD"></i>2位</span><span><i style="background:#E8F1E4"></i>3位</span><span>赤：REDS4 の Bicubic を下回る幅が <i style="background:#F7E4E1"></i>5%、<i style="background:#EDBDB6"></i>25%、<i style="background:#DC8F86"></i>50% 超</span></div>
+  <div class="scroll" tabindex="0" role="region" aria-label="高速化ストリーミング比較表（スクロール可）"><table id="stream-table">
+    <thead><tr><th scope="col" rowspan="2">手法</th><th scope="colgroup" colspan="6">効率（720p、FP16/BF16、100フレーム）</th><th scope="colgroup" colspan="9">品質（REDS4、×4）</th></tr>
+    <tr><th scope="col">パラメータ</th><th scope="col">TFLOPs ↓</th><th scope="col">未来</th><th scope="col">FPS ↑</th><th scope="col">TTFF (s) ↓</th><th scope="col">メモリ ↓</th><th scope="col">PSNR ↑</th><th scope="col">SSIM ↑</th><th scope="col">LPIPS ↓</th><th scope="col">DISTS ↓</th><th scope="col">VMAF ↑</th><th scope="col">MUSIQ ↑</th><th scope="col">CLIP-IQA ↑</th><th scope="col">tLP ↓</th><th scope="col">tOF ↓</th></tr></thead>
+    <tbody></tbody></table></div>
+  <p class="note" style="margin-top:8px">SwiftVR、FastVR、ReCaVSR、RelayVSR、FlashVSR+ は公式設定・公式の半精度で、ReLoopVSR は FP16 で実行。「未来」は出力に影響しうる未来入力フレームの数。「メモリ」は GiB 単位のピーク GPU メモリ。</p>
+  <figure class="fig-wrap"><div class="fig"><a href="../assets/fig/qualitative_accel.webp?v=20261117f"><img src="../assets/fig/qualitative_accel.webp?v=20261117f" width="2400" height="667" loading="lazy" decoding="async" alt="REDS4 クリップ 000、011、020 の切り出し（Bicubic、SwiftVR、FastVR、ReCaVSR、RelayVSR、FlashVSR+、K=8 の ReLoopVSR-fast、ReLoopVSR、正解）。各切り出しに LPIPS を付記。3つの切り出しすべてで ReLoopVSR の LPIPS が最も低く、ReLoopVSR-fast が2番目に低い。"></a></div>
+    <figcaption><b>高速化ストリーミング VSR 手法との定性比較</b>（REDS4、補足資料）。数値は切り出し領域の LPIPS ↓ で、最良を太字で示す。</figcaption></figure>
+</div></section>
+
+<section id="performance"><div class="wrap">
+  <div class="head"><p class="eyebrow">性能</p><h2>720p における計算コストと因果的レイテンシ</h2>
+  <p>REDS4 クリップ 000（720p 出力、100フレーム）に対するパイプライン全体のコスト。RTX PRO 6000 Blackwell（96 GiB）1枚、FP32、公式の推論設定で計測。未来フレームは出力に影響しうる未来入力の数を表し、チャンク型手法は入力をバッファするため、スループットと並べて初回フレームまでの時間（TTFF）を報告する。ReLoopVSR は未来フレームに依存せず、計測した手法の中で TTFF が最短、ピークメモリが最小である。</p></div>
+  <div class="stack">
+    <div class="panel">
+      <div id="eff-tabs" class="tabs" style="justify-content:flex-start;margin-bottom:12px"></div>
+      <p class="note" id="eff-label" aria-live="polite"></p>
+      <div class="bars" id="eff-bars" role="list" aria-label="手法を良い順に並べたもの"></div>
+      <p class="note axisn">行にホバーまたはフォーカスするとすべての値を表示。ReLoopVSR-NVOFA は RAFT をハードウェアのオプティカルフロー（NVOFA）に置き換えたもの。</p>
+    </div>
+    <div>
+      <p class="eyebrow" style="margin-bottom:6px">論文の表1</p>
+      <div class="legend" aria-hidden="true"><span><i style="background:#7CB696"></i>1位</span><span><i style="background:#BEDBBD"></i>2位</span><span><i style="background:#E8F1E4"></i>3位</span></div>
+      <div class="scroll" tabindex="0" role="region" aria-label="コスト表（スクロール可）"><table id="eff-table"><thead><tr><th scope="col">手法（FP32）</th><th scope="col">パラメータ（M）</th><th scope="col">TFLOPs ↓</th><th scope="col">未来フレーム</th><th scope="col">FPS ↑</th><th scope="col">TTFF (s)</th><th scope="col">ピーク（GiB）</th></tr></thead><tbody></tbody></table></div>
+      <p class="note" style="margin-top:8px">TFLOPs は 720p 出力1フレームあたり。公式の推論設定による厳密な FP32。ただし FlashVSR 系の実行では BF16 のスパースアテンションカーネルをそのまま用いる。</p>
+    </div>
+    <div class="panel">
+      <h3 style="margin-bottom:6px">出力解像度別（FP16）</h3>
+      <p class="note" style="margin-bottom:12px">×4、100フレーム、補足資料の解像度表より。<i>K</i>=20 の ReLoopVSR-fast は 720p で 249.43 FPS、4K で 28.13 FPS、ピークメモリはそれぞれ 2.2 GiB と 11.7 GiB であり、いくつかのベースラインは 4K でメモリ不足となる。補足資料には FP32 と BF16 の結果も掲載。</p>
+      <div class="scroll" tabindex="0" role="region" aria-label="解像度表（スクロール可）"><table id="res-table">
+      <thead><tr><th scope="col" rowspan="2">手法</th><th scope="colgroup" colspan="3">720p</th><th scope="colgroup" colspan="3">1080p</th><th scope="colgroup" colspan="3">1440p (2K)</th><th scope="colgroup" colspan="3">2160p (4K)</th></tr>
+      <tr><th scope="col">FPS ↑</th><th scope="col">TTFF ↓</th><th scope="col">GiB ↓</th><th scope="col">FPS ↑</th><th scope="col">TTFF ↓</th><th scope="col">GiB ↓</th><th scope="col">FPS ↑</th><th scope="col">TTFF ↓</th><th scope="col">GiB ↓</th><th scope="col">FPS ↑</th><th scope="col">TTFF ↓</th><th scope="col">GiB ↓</th></tr></thead>
+      <tbody></tbody></table></div>
+      <p class="note" style="margin-top:8px">TTFF は秒単位。† より短い実行から外挿。§ 公式の半精度は BF16 のみ。‡ RAFT の相関をオンザフライで計算。OOM：96 GiB を超過。区切り線より下の行は表3の高速化手法。</p>
+    </div>
+  </div>
+</div></section>
+
+<section id="benchmarks" class="alt"><div class="wrap">
+  <div class="head"><p class="eyebrow">定量比較</p><h2>7つのテストセットでの定量比較</h2>
+  <p>フル精度での ×4 復元。ベースラインは公式設定（論文の表2）。ReLoopVSR は6つのペアデータセットすべてで LPIPS と DISTS が最も低い。4ステップの Stream-DiffVSR と比べると、6つすべてで PSNR と SSIM の両方を改善し、4つで最高の VMAF を達成する。MUSIQ では、より大規模な拡散事前分布を持つ手法が依然としてすべてのペアセットで首位である。</p></div>
+  <div id="bench-tabs" class="tabs"></div>
+  <p class="sumline" id="bench-sum" aria-live="polite"></p><p class="meta-line" id="bench-meta"></p>
+  <div class="legend"><span><i style="background:#7CB696"></i>1位</span><span><i style="background:#BEDBBD"></i>2位</span><span><i style="background:#E8F1E4"></i>3位</span><span>赤：Bicubic を下回る幅が <i style="background:#F7E4E1"></i>5%、<i style="background:#EDBDB6"></i>25%、<i style="background:#DC8F86"></i>50% 超</span><span>↑ 高いほど良い</span><span>↓ 低いほど良い</span></div>
+  <div class="scroll" id="bench-table" tabindex="0" role="region" aria-label="ベンチマーク表（スクロール可）"></div>
+  <p class="note" style="margin-top:12px">ペアのテストではバイキュービック ×4 入力と、バイキュービックで学習したモデルを用いる。VideoLQ には正解がなく、DOVE の圧縮劣化でファインチューニングした ReLoopVSR を用いる。tLP は100倍した値。Bicubic は拡大した入力そのもの。同値は同順位。</p>
+</div></section>
+
+<section id="temporal"><div class="wrap">
+  <div class="head"><p class="eyebrow">時間特性</p><h2>時間的忠実度、誤差スパイク、シーンカット</h2>
+  <p>時間的評価では、実際のシーン変化を考慮する必要がある。tLP は正解に対するフレーム間の知覚的変化の食い違いを、tOF は復元フレームと正解フレームのオプティカルフローの差を測る。</p></div>
+  <div class="tcards">
+    <div class="tcard"><b>6つのペアセットすべてで tOF が最小</b><span>ReLoopVSR は SPMCS を除くすべてのペアセットで tLP も最小であり、その tLP は Stream-DiffVSR より 45–61% 低い。</span></div>
+    <div class="tcard"><b>LPIPS に明確な上昇傾向なし</b><span>シーンカットを含む500フレームのストリーム全体で、シーンの難しさを考慮すると LPIPS に明確な上昇傾向は見られず、評価した範囲では誤差の蓄積が限定的であることを示唆する。</span></div>
+    <div class="tcard"><b>121/121 のカットを検出</b><span>未来フレーム 0 での全編 <i>Tears of Steel</i> ストリームにおける結果。LongAIGC-4 でも同じく未来フレーム 0 で 29/34 のカットペアを検出。</span></div>
+  </div>
+  <div class="two" style="margin-top:8px">
+  <figure class="fig-wrap"><div class="fig"><a href="../assets/fig/ablation_profile_long.webp?v=20261117f"><img src="../assets/fig/ablation_profile_long.webp?v=20261117f" width="2160" height="1600" loading="lazy" decoding="async" alt="LongAIGC クリップ 004 で黄色い走査線1本を500フレーム分積み重ねた図（正解、FastVR、SwiftVR、ReCaVSR、RelayVSR、ReLoopVSR）。各手法の下に増幅した誤差帯、カット位置に赤い目盛りを示す。ReLoopVSR の誤差帯が最も暗い。"></a></div>
+    <figcaption><b>500フレームにわたる時間プロファイル</b>（論文の図8）。1本の走査線を時間方向に下へ積み重ねたもの。細い帯は正解に対する誤差を10×に増幅して示し、赤い目盛りはカットを示す。ストリーミング拡散手法の中で、サンプルした走査線での誤差は ReLoopVSR が最も低い。</figcaption></figure>
+  <figure class="fig-wrap"><div class="fig"><a href="../assets/fig/cut_timeline.webp?v=20261117f"><img src="../assets/fig/cut_timeline.webp?v=20261117f" width="1600" height="706" loading="lazy" decoding="async" alt="9つのカットを含む500フレームの LongAIGC クリップにおけるフレームごとの LPIPS。ReLoopVSR は全体を通じて 0.02 付近にとどまる。信頼性制御なしではすべてのカットでスパイクが現れる。ReCaVSR、RelayVSR、SwiftVR、FastVR、FlashVSR+ はおよそ 0.05〜0.28 の間にある。"></a></div>
+    <figcaption><b>ストリーミング超解像中の誤差スパイク</b>（論文の図9）。信頼性制御はカットでのスパイクを抑え、ReLoopVSR は一貫して低い LPIPS を示す一方、ストリーミングのベースラインは誤差が蓄積し、LPIPS が 5–9× 高い。</figcaption></figure>
+  </div>
+  <div class="two" style="margin-top:32px;align-items:center">
+    <figure class="fig-wrap"><div class="fig"><a href="../assets/fig/video_profiles.webp?v=20261117f"><img src="../assets/fig/video_profiles.webp?v=20261117f" width="2200" height="1029" loading="lazy" decoding="async" alt="YouHQ40 クリップ 038 のひげのテクスチャにおける、正解と複数手法の走査線の時間プロファイル。"></a></div>
+    <figcaption><b>時間プロファイル</b>（YouHQ40 クリップ 038、補足資料）。1本の走査線を時間方向に積み重ねたもので、ひげのテクスチャのコントラストが動きとともにどう保たれ、変化するかがわかる。ReLoopVSR はこの構造をより多く保持する。</figcaption></figure>
+    <div><p class="eyebrow" style="margin-bottom:6px">論文の表6：シーンカットの検出と復元</p><div class="scroll" tabindex="0" role="region" aria-label="シーンカット表（スクロール可）"><table>
+      <thead><tr><th scope="col" rowspan="2">映像</th><th scope="colgroup" colspan="2">検出カット数</th><th scope="colgroup" colspan="2">未来フレーム</th><th scope="colgroup" colspan="3">LPIPS ↓</th></tr>
+      <tr><th scope="col">提案手法</th><th scope="col">PSD</th><th scope="col">提案手法</th><th scope="col">PSD</th><th scope="col">提案手法</th><th scope="col">リセットなし</th><th scope="col">Stream-DiffVSR</th></tr></thead>
+      <tbody><tr><th scope="row"><i>Tears of Steel</i></th><td class="dv">121/121</td><td>117/121</td><td class="dv">0</td><td>15</td><td class="dv">0.0693</td><td>0.0955</td><td>0.1334</td></tr>
+      <tr><th scope="row">LongAIGC-4</th><td class="dv">29/34</td><td>28/34</td><td class="dv">0</td><td>15</td><td class="dv">0.0326</td><td>–</td><td>0.1077</td></tr></tbody></table></div>
+    <p class="note" style="margin-top:8px">PSD は InfVSR の設定による PySceneDetect を表す。カット数は全編 <i>Tears of Steel</i> ストリームと、LongAIGC-8 の4つの AIGC クリップで数えている。強い照明のフラッシュでもリセットが起こりうる。</p></div>
+  </div>
+  <div style="margin-top:32px"><figure class="fig-wrap"><div class="fig"><a href="../assets/fig/long_drift.webp?v=20261117f"><img src="../assets/fig/long_drift.webp?v=20261117f" width="2400" height="1432" loading="lazy" decoding="async" alt="LongAIGC-8 における10手法の3列のプロット。左：破線のシーンカットを含む2つの500フレームクリップに沿ったフレームごとの LPIPS と PSNR で、ReLoopVSR は全体を通じて LPIPS が最も低い。中央：39ショットにわたる、直近のカットからのフレーム数に対する LPIPS と PSNR の変化。右：8クリップにわたる100フレームあたりの LPIPS と PSNR の傾き（95% 区間付き、生の値と内容補正後）で、ReLoopVSR の LPIPS の傾きはほぼゼロ。"></a></div>
+    <figcaption><b>長いストリームに沿った品質</b>（LongAIGC-8、補足資料）。左：2クリップでのフレームごとの LPIPS と PSNR、破線はシーンカット。中央：直近のカットからのフレーム数に対する品質。右：100フレームあたりの傾き（95% 区間付き）、生の値とバイキュービックの内容傾向で補正した値。</figcaption></figure></div>
+</div></section>
+
+<section id="faq" class="alt"><div class="wrap">
+  <div class="head"><p class="eyebrow">FAQ</p><h2>よくある質問と限界</h2></div>
+  <div class="faq">
+  <details open><summary>ReLoopVSR とは？<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>ReLoopVSR は、ストリーミング ×4 動画超解像のためのコンパクトな再帰的自己回帰拡散フレームワークである。直前のノイズ除去済み潜在表現を位置合わせ・再ノイズ付加して現在の更新を初期化し、共有の1ステップデノイザにより現在の低解像度観測を用いてリファインする。軽量な時間モジュールが条件付けとデコードのコストを削減する。</p><p>局所・大域の信頼性制御は誤差が予測される箇所で伝播を止め、知覚的な時間的教師信号を用いたロールアウト学習により、継承した誤差を補正するようモデルを適応させる。ReLoopVSR-fast はキーフレームでのみデノイザを実行し、その他のフレームは軽量な高速デコーダで復元する。</p></div></details>
+  <details><summary>なぜ自己回帰なのか？<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>シーン内では、動き補償後の直前の復元結果がすでに現在フレームの推定となっているため、それを補正するほうがノイズからフレームを生成し直すより低コストである。各更新はすでに到着した入力のみに依存するため、未来フレームのバッファリングは不要である。</p><p>時間的に対応する内容に同じデノイザで更新を繰り返すことで、パラメータを固定し、1フレームあたり1回のノイズ除去ステップのまま、フレームをまたいで実効的な計算深さが拡張される。</p></div></details>
+  <details><summary>ReLoopVSR-base と ReLoopVSR-fast とは？<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>ReLoopVSR-base はすべてのフレームで1回のノイズ除去ステップを実行し、最高の忠実度を提供する。ReLoopVSR-fast は公称間隔 <i>K</i>（4〜20）のキーフレームでのみデノイザを実行し、間のフレームは 3.70M パラメータの高速デコーダで復元する。REDS4 では、720p・半精度で <i>K</i>=4 が 85.7 FPS、<i>K</i>=20 が 249.4 FPS となるが、忠実度はいくらか低下する。</p></div></details>
+  <details><summary>シーンカットはどう扱われる？<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>信頼できないタイルがフレームの半分以上を占め、かつ色ヒストグラム距離が大きい、または直前フレームとのサムネイル相関が低いことによって LR の大域的な見た目の変化が検出されると、状態全体をリセットする。潜在表現、時間的条件、フローのウォームスタートはまとめて消去され、未来フレームは用いない。</p><p>全編 <i>Tears of Steel</i> ストリームの121個のカットはすべて検出され、LongAIGC-4 では34のカットペアのうち29を検出する。強い照明のフラッシュでもリセットが起こりうる。</p></div></details>
+  <details><summary>他の手法と比べてどうか？<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>ReLoopVSR は6つのペアベンチマークすべてで LPIPS と DISTS が最も低く、tOF は6つすべてで、tLP は5つで最も低い。共通の 720p プロトコルでは、未来フレームに依存せず、計測した手法の中で初回フレームまでの時間が最短、ピークメモリが最小である。</p><p>ただし、すべての指標で首位というわけではない。MUSIQ ではより大規模な拡散事前分布を持つ手法がすべてのペアセットで首位であり、Vid4 と SPMCS では DOVE が SSIM と VMAF で首位、LongAIGC-8 ではバイキュービック拡大そのものが SSIM で最上位となる。</p></div></details>
+  <details><summary>リアルタイムで動作するか？<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>ReLoopVSR-fast は RTX PRO 6000 Blackwell 1枚、半精度で、720p で 240 FPS、4K で 28 FPS を超える。ReLoopVSR-base は 720p で、FP16 では 17.4 FPS、厳密な FP32 では 3.58 FPS で動作する。いずれも、各出力が未来フレームを待たずに得られるという因果的な意味でストリーミングである。</p></div></details>
+  <details><summary>GPU メモリはどれくらい必要か？長い動画でメモリ不足にならないか？<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>720p でのピーク確保量は、厳密な FP32 の ReLoopVSR で 4.92 GiB、FP16 の ReLoopVSR-base で 4.4 GiB、ReLoopVSR-fast で 2.2 GiB である。半精度では、ReLoopVSR は 11.6 GiB のピークメモリで 4K 動画を復元する。状態は固定サイズで、フレームは1枚ずつ処理されるため、メモリはストリーム長によらず一定である。</p></div></details>
+  <details><summary>対応する拡大倍率は？<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>評価したモデルは ×4 のみを復元し、その他の倍率は未評価である。</p></div></details>
+  <details><summary>自分の動画で結果がバイキュービックに近く見えるのはなぜか？<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>既定のモデルはバイキュービック ×4 入力向けに学習されている。圧縮などで劣化した動画には、実世界向けにファインチューニングしたチェックポイントが必要であり、上の表で VideoLQ に用いたのはこの版である。それでも、改善の度合いは内容と指標に依存する。また、入力がすでに拡大された動画ではなく、低解像度の元動画であることも確認してほしい。</p></div></details>
+  <details><summary>コード、重み、学習スクリプト、デモは入手できるか？<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>まだ入手できない。公開され次第、リンクとライセンス条件をここに掲載する。</p></div></details>
+  </div>
+</div></section>
+
+<section id="citation"><div class="wrap">
+  <div class="head"><p class="eyebrow">引用</p><h2>本研究の引用</h2><p>発表先とリンクは後日追加する。</p></div>
+  <div class="bib"><pre id="bibtex" tabindex="0" translate="no">@misc{reloopvsr,
+  title  = {ReLoopVSR: One-Step Recurrent Autoregressive Diffusion
+            Refinement for Streaming Video Super-Resolution},
+  author = {Lee, Chia-Ming and Chang, Ming-Ching and Li, Xin and Liu, Yu-Lun and Hsu, Chih-Chung},
+  year   = {2026},
+  note   = {Preprint}
+}</pre><button class="btn btn-s copy" id="copy" type="button">コピー</button></div>
+  <p class="vh" id="copy-status" aria-live="polite"></p>
+  <div class="links-soon">
+    <button class="btn" type="button" disabled>論文 <small>近日公開</small></button>
+    <button class="btn" type="button" disabled>コード <small>近日公開</small></button>
+    <button class="btn" type="button" disabled>重み <small>近日公開</small></button>
+    <button class="btn" type="button" disabled>デモ <small>近日公開</small></button>
+  </div>
+</div></section>
+</main>
+<footer><div class="wrap">
+  <span class="brand" translate="no" style="font-size:1rem">ReLoop<b style="color:var(--accent-ink)">VSR</b></span>
+  <p>テスト素材：論文で用いた REDS4、YouHQ40、LongAIGC-8 の動画、VideoLQ を、研究上の比較のために表示している。<i>Tears of Steel</i> (CC) Blender Foundation。</p>
+  <p>数値は論文の表による。このページは外部リソースを読み込まず、データを収集しない。フォント：Inter と JetBrains Mono、SIL Open Font License（assets/fonts を参照）。</p>
+</div></footer>
+<script>window.DV_BASE='../';window.DV_I18N={"themeLight":"ライトテーマに切り替え","themeDark":"ダークテーマに切り替え","sliderValue":"幅の {n} パーセントに{what}を表示","gripName":"比較の境界：左が入力、右が ReLoopVSR","tagInput":"入力（バイキュービック）","tagOurs":"ReLoopVSR","sliderWhat":"バイキュービック入力","pause":"一時停止","play":"再生","pauseClip":"このクリップを一時停止","playClip":"このクリップを再生","decodeErr":"このブラウザではクリップをデコードできなかったため、静止フレームを表示している。スライダーは引き続き使用できる。","soundOn":"音声オン","soundOff":"音声オフ","muteClip":"このクリップをミュート","unmuteClip":"このクリップのミュートを解除","unitS":" s","doneAt":"完了 ","done":"完了 ","oomAt":"{res} で{why}","oomLong":"メモリ不足（OOM）","notRaced":"レース対象外","waitFirst":"最初のフレームを待機中","laneMeta":"{ttff} s、{fps} FPS","laneAria":"REDS4 クリップ 000 での {name}、{res} で計時","clipNA":"クリップを利用できない","chipOom":"{res} で{why}、レース対象外","chipFrames":"{k} / 100 フレーム","chipWait":"0 / 100、最初のフレームは {t} s","resume":"再開","speed1":"1× 速度","speedN":"{n}× 加速","raceCap":"{res}：{name}、最初のフレームまで {t} s、{fps} FPS。","all":"すべて","filterTabs":"データセットで比較を絞り込む","effFpsL":"720p・FP32 での毎秒フレーム数（高いほど良い）","effTtffL":"初回フレームまでの時間（秒、低いほど良い）。0.01 s からの対数軸。","effPeakT":"ピークメモリ","effPeakL":"確保された GPU メモリのピーク（GiB、低いほど良い）","effFutT":"未来フレーム","effFutL":"出力に影響しうる未来フレームの数（低いほど良い）","unitFr":" フレーム","effTflL":"720p 出力1フレームあたりの TFLOPs（低いほど良い）","effParT":"パラメータ","effParL":"パラメータ数（百万単位、低いほど良い）","tip":"{fps} FPS · {tflops} TFLOPs/フレーム<br>TTFF {ttff} s · ピーク {peak} GiB<br>未来フレーム {future} · パラメータ {params} M","effTabs":"コスト指標を選択","ours":"（提案手法）","grpOffline":"オフライン拡散","grpChunk":"ストリーミング・チャンク型拡散","grpAR":"ストリーミング・自己回帰拡散","higher":"高いほど良い","lower":"低いほど良い","and":"と","leadItem":"{metric}（{who}）","sum":"{set} における ReLoopVSR：{n} 指標中 {b} 指標で1位、{s} 指標で2位、{t} 指標で3位{rest}。","sumRest":"、{o} 指標で上位3位圏外","sumLead":" その他の指標の1位：{list}。","listSep":"、","metric":"指標","rBest":"1位","rSecond":"2位","rThird":"3位","benchTabs":"テストセットを選択","copiedMsg":"クリップボードにコピーしました。","copyFail":"コピーできませんでした。テキストを手動で選択してください。","copied":"コピー済み","copy":"コピー","sch.noise":"ノイズ","sch.current_lr_frame_k":"現在の LR *k*","sch.previous_restoration":"前フレームの復元","sch.conditioning":"条件付け","sch.four_denoising_steps":"4ステップのノイズ除去","sch.step":"Step ","sch.restored_frame_k":"復元フレーム *k*","sch.frame_k_1_starts":"フレーム *k*+1 は","sch.from_new_noise":"新たなノイズから開始。","sch.buffered_chunk":"バッファしたチャンク","sch.frame_k_waits":"フレーム *k* は待機","sch.future_frames":"未来フレーム","sch.joint_restoration_of_the_chunk":"チャンクを一括復元","sch.the_next_chunk":"次のチャンクは","sch.overlaps_this_one":"これと重なる。","sch.previous_restored_latent":"前の復元潜在表現","sch.warp_by_flow":"フローでワープ","sch.aligned_latent":"位置合わせ済み潜在","sch.encode":"符号化","sch.encoded_lr":"符号化 LR","sch.reliability_check":"信頼性チェック","sch.reliable_tiles":"信頼タイル","sch.unreliable":"非信頼","sch.tiles":"タイル","sch.propagated_start":"伝播した開始点","sch.scene_cut":"シーンカット","sch.resets_the_state":"状態を符号化 LR","sch.to_the_encoded_lr":"にリセット","sch.re_noise_to_an":"中間レベルまで","sch.intermediate_level":"再ノイズ付加","sch.re_noised_start":"再ノイズ開始点","sch.current_lr":"現在の LR","sch.one_u_net_step":"1ステップ U-Net","sch.start_for_frame_k_1":"フレーム *k*+1 の開始点","sch.regenerate_each_frame":"毎フレーム再生成","sch.example_stream_diffvsr":"例：Stream-DiffVSR","sch.each_new_frame_starts_from_noise_and_tak":"新しいフレームはそれぞれノイズから始まり、前フレームの復元結果を条件として4ステップのノイズ除去を行う。そのため、細部は毎フレーム生成し直される。","sch.regenerate_each_frame_noise_enters_a_cha":"毎フレーム再生成。ノイズが、前フレームの復元結果と現在の低解像度フレームを条件とする4ステップのノイズ除去の連鎖に入り、復元フレーム k を生成する。","sch.re_restore_chunks":"チャンクを再復元","sch.examples_flashvsr_infvsr":"例：FlashVSR、InfVSR","sch.the_method_buffers_a_chunk_that_includes":"この手法は未来フレームを含むチャンクをバッファし、チャンクをまとめて復元する。そのため、フレーム <i>k<\/i> の出力はまだ到着していないフレームを待つことになる。","sch.re_restore_chunks_frames_including_futur":"チャンクを再復元。未来フレームを含むフレームがバッファされたチャンクに蓄積されて一括で復元され、その後、復元されたチャンクからフレーム k が取り出される。","sch.reloopvsr":"ReLoopVSR","sch.recurrent_refinement":"再帰的リファインメント","sch.reloopvsr_warps_the_previous_restored_la":"ReLoopVSR は前の復元潜在表現をフレーム <i>k<\/i> へワープし、信頼できないタイルを符号化した LR から再始動する。続いて1回の U-Net ステップで再ノイズ付加した開始点をリファインし、その出力が次フレームの出発点となる。","sch.reloopvsr_the_previous_restored_latent_i":"ReLoopVSR。前の復元潜在表現を、拡大した低解像度入力間のオプティカルフローでフレーム k へワープする。信頼性チェックがタイルごとに、位置合わせした潜在表現と符号化した低解像度フレームのどちらかを選び、シーンカットでは状態を符号化した低解像度フレームにリセットする。選ばれた開始点は中間レベルまで再ノイズ付加され、現在の低解像度フレームのもとで1回の U-Net ステップによりリファインされる。復元フレーム k はフレーム k+1 の出発点としてループバックする。","sch.mode_all_three":"全3種","sch.mode_regenerate":"再生成","sch.mode_chunks":"チャンク","sch.mode_reloopvsr":"ReLoopVSR","sch.schematic_not_data":"模式図（非データ）","sch.choose_which_pipeline_to_show":"表示するパイプラインを選択","sch.replay_the_animation":"アニメーションを再生し直す","sch.replay":"リプレイ","sch.where_each_starting_point_comes_from":"各開始点の由来","sch.every_column_shows_the_same_reds4_crop_a":"どの列も状態の説明として同じ REDS4 の切り出しを示しており、サムネイルは品質の比較を表すものではない。","meta:REDS4":"4クリップ、400フレーム、1クリップあたり100フレーム、カットなし","meta:Vid4":"4クリップ、171フレーム、1クリップあたり34–49フレーム、カットなし","meta:SPMCS":"30クリップ、934フレーム、1クリップあたり31–35フレーム、カットなし","meta:YouHQ40":"40クリップ、1318フレーム、1クリップあたり31–33フレーム、クリップ 019 の1箇所を除きカットなし","meta:LongAIGC-8":"8クリップ、4000フレーム、1クリップあたり500フレーム、カット64箇所","meta:Tears of Steel":"5クリップ、1109フレーム、1クリップあたり165–270フレーム、カット11箇所","meta:VideoLQ":"実世界、正解なし。50クリップ、4771フレーム、1クリップあたり34–100フレーム"}</script>
+<script src="../assets/data.js?v=20261118t" defer></script>
+<script src="../assets/schematic.js?v=20261118i18n" defer></script>
+<script src="../assets/app.js?v=20261118i18n" defer></script>
+</body>
+</html>
