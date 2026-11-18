@@ -8,7 +8,7 @@
 <meta name="robots" content="noindex">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237CB696'/%3E%3Cpath d='M23 11a9 9 0 1 0 1.6 7' fill='none' stroke='%2327323c' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='m25 6-1 6.6-6.4-1.6' fill='none' stroke='%2327323c' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script>try{var t=localStorage.getItem('dv-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
-<link rel="stylesheet" href="assets/style.css?v=20261118">
+<link rel="stylesheet" href="assets/style.css?v=20261118l">
 <link rel="stylesheet" href="assets/schematic.css?v=20261110c">
 <style>#race-chips{grid-column:1/-1;grid-template-columns:repeat(5,minmax(0,1fr));margin-top:0}@media (max-width:760px){#race-chips{grid-template-columns:repeat(2,minmax(0,1fr))}}.rp.oom .rv{opacity:.55}.race-ctl .seg+.seg{margin-left:4px}.note.illus{font-size:12px;text-align:center;margin:6px auto 10px;max-width:none}#race-cap{margin-top:4px;font-size:13px;color:var(--ink-2)}.seg[data-g=res] button,.seg[data-g=k] button{width:auto;min-width:44px;padding:0 9px}</style>
 </head>
@@ -29,9 +29,11 @@
 <div id="tip" hidden></div>
 
 <main id="main">
-<div class="hero" id="top"><div class="wrap">
-  <div class="hero-top">
-    <h1><em>ReLoopVSR</em>: <span class="nb">One-Step</span> Recurrent Autoregressive Diffusion Refinement for Streaming Video Super-Resolution</h1>
+<div class="hero" id="top">
+  <div class="hero-view" data-clip="hero" data-desc="Six Inter4K clips of city aerials, flowers and paint, split into the bicubic-upsampled input and the ReLoopVSR output"><img class="hero-poster" src="media/poster/hero_split.webp?v=20261118" width="1920" height="1080" alt="" fetchpriority="high" decoding="async"></div>
+  <div class="hero-fade" aria-hidden="true"></div>
+  <div class="hero-inner wrap"><div class="hero-text">
+    <h1 class="hero-title"><em>ReLoopVSR</em><span class="vh">: </span><span class="hero-sub"><span class="nb">One-Step</span> Recurrent Autoregressive Diffusion Refinement for Streaming Video Super-Resolution</span></h1>
     <p class="authors"><a href="https://ming053l.github.io/" target="_blank" rel="noopener">Chia-Ming Lee</a><sup>1,2</sup>, <a href="https://mingching.github.io/" target="_blank" rel="noopener">Ming-Ching Chang</a><sup>1</sup>, <a href="https://scholar.google.com/citations?user=gMBvzGoAAAAJ&amp;hl=en" target="_blank" rel="noopener">Xin Li</a><sup>1</sup>, <a href="https://yulunalexliu.github.io/" target="_blank" rel="noopener">Yu-Lun Liu</a><sup>2</sup>, <a href="https://cchsu.info/" target="_blank" rel="noopener">Chih-Chung Hsu</a><sup>2</sup></p>
     <p class="affil"><span><sup>1</sup>University at Albany, SUNY</span>&nbsp;&nbsp;&nbsp; <span><sup>2</sup>National Yang Ming Chiao Tung University</span></p>
     <p class="lede">ReLoopVSR restores a video stream without future frames, in one denoising step per frame. It aligns and re-noises the previous restoration, refines it with the current low-resolution frame, and restarts wherever errors are predicted or the scene cuts. It leads in perceptual quality with far lower memory and latency, and ReLoopVSR-fast exceeds 240 FPS at 720p.</p>
@@ -40,7 +42,18 @@
       <a class="btn btn-s" href="#benchmarks">See the numbers</a>
       <button class="btn" type="button" disabled>Read the paper <small>coming soon</small></button>
     </div>
+  <div class="stats hero-stats" role="list" aria-label="Key measured numbers">
+    <div role="listitem"><b>0 frames</b><span>future-frame dependency</span></div>
+    <div role="listitem"><b>0.04 s</b><span>time to first frame, half precision</span></div>
+    <div role="listitem"><b>240+ FPS</b><span>ReLoopVSR-fast at 720p</span></div>
+    <div role="listitem"><b>28+ FPS</b><span>ReLoopVSR-fast at 4K</span></div>
+    <div role="listitem"><b>2.2 GiB</b><span>peak memory at 720p</span></div>
   </div>
+  </div></div>
+  <div class="hero-cap"><button class="play" id="hero-play" type="button" aria-label="Pause this clip"><svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M2 1h3v10H2zM7 1h3v10H7z"/></svg><span>Pause</span></button><span id="hero-cap"><b>Six Inter4K clips</b> · left: bicubic input · right: ReLoopVSR (×4) · illustrative, earlier checkpoint</span></div>
+  <a class="scroll-cue" href="#race" aria-label="Scroll to the speed race"><span></span></a>
+</div>
+<div class="hero-after"><div class="wrap">
   <section class="race" id="race" aria-labelledby="race-h">
     <div class="race-top">
       <h2 id="race-h" class="race-title">Same 100 frames, shared clock, 720p to 4K</h2>
@@ -64,15 +77,6 @@
     <p class="vh">At 720p in FP16, ReLoopVSR-fast with K=20 shows its first frame at 0.04 seconds and runs at 249.43 frames per second, and at 4K it runs at 28.13 frames per second. ReLoopVSR-base runs at 17.61 frames per second at 720p. Stream-DiffVSR runs out of memory at 4K.</p>
   </section>
   <noscript><p class="note">The comparison sliders, charts and tables need JavaScript. Paper figures and text remain readable.</p></noscript>
-  <div class="hero-cmp cmp" data-clip="hero" data-desc="Six Inter4K clips of city aerials, flowers and paint, split into the bicubic-upsampled input and the ReLoopVSR output" data-cap="<b>Six Inter4K clips</b>, 960×540 input, ×4 to 3840×2160, shown here at 1920×1080; 30 frames per clip at 15 fps. Drag the handle or use the arrow keys. Low-resolution input leaves fine texture ambiguous, so fine detail can be plausible rather than true."></div>
-  <p class="note illus"><b>Illustrative only:</b> restored with an earlier checkpoint and not part of the paper's evaluation.</p>
-  <div class="stats" role="list" aria-label="Key measured numbers">
-    <div role="listitem"><b>0 frames</b><span>future-frame dependency</span></div>
-    <div role="listitem"><b>0.04 s</b><span>time to first frame, half precision</span></div>
-    <div role="listitem"><b>240+ FPS</b><span>ReLoopVSR-fast at 720p</span></div>
-    <div role="listitem"><b>28+ FPS</b><span>ReLoopVSR-fast at 4K</span></div>
-    <div role="listitem"><b>2.2 GiB</b><span>peak memory at 720p</span></div>
-  </div>
   <p class="note">One RTX PRO 6000 Blackwell, ×4, 100 frames. ReLoopVSR-fast with keyframe interval <i>K</i>=20 runs at 249.4 FPS at 720p and 28.1 FPS at 4K in half precision, with 2.2 GiB of peak memory at 720p. In strict FP32, ReLoopVSR also has the shortest time to first frame (0.22 s) and the lowest peak memory among the evaluated methods.</p>
   <figure class="fig-wrap teaser"><div class="fig"><a href="assets/fig/teaser_top.webp?v=20261117f"><img src="assets/fig/teaser_top.webp?v=20261117f" width="2400" height="1252" loading="lazy" decoding="async" alt="Left: two 4K ReLoopVSR outputs from 960×540 inputs, split against the input, labelled 720p at 240+ FPS and 4K at 28+ FPS. Middle: crops from FlashVSR-Tiny, InfVSR, ReLoopVSR and ground truth. Right: LPIPS against FPS with bubble size for parameters, where ReLoopVSR and its K=4 to 20 fast settings sit at low LPIPS and high FPS; time to first frame per method, where ReLoopVSR needs 0.22 s in FP32 and 0.04 s in FP16; and peak memory from 720p to 4K, where ReLoopVSR needs 2.1 to 11.6 GiB."></a></div>
     <figcaption><b>Streaming video super-resolution with ReLoopVSR</b> (paper Fig. 1). ReLoopVSR propagates the previous restoration and refines it with the current observation in a single denoising step. It combines competitive fidelity, temporal consistency and throughput with zero future-frame dependency, the shortest measured time to first frame, and the lowest peak memory usage among the evaluated methods.</figcaption></figure>
@@ -258,6 +262,6 @@
 </div></footer>
 <script src="assets/data.js?v=20261118" defer></script>
 <script src="assets/schematic.js?v=20261118" defer></script>
-<script src="assets/app.js?v=20261118" defer></script>
+<script src="assets/app.js?v=20261118l" defer></script>
 </body>
 </html>

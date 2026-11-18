@@ -18,9 +18,9 @@ if('IntersectionObserver' in window){var navLinks=$$('.links a');var so=new Inte
 navLinks.forEach(function(a){var t=$(a.getAttribute('href'));if(t)so.observe(t)})}
 
 /* slider core: pointer, touch and keyboard all funnel into set() */
-function bindSlider(stage,grip,label,onChange){
+function bindSlider(stage,grip,label,onChange,own){
   var pos=50,drag=false;
-  function set(p){pos=Math.min(100,Math.max(0,p));stage.style.setProperty('--pos',pos+'%');var n=Math.round(pos);grip.setAttribute('aria-valuenow',n);grip.setAttribute('aria-valuetext',n+' percent of the width shows '+label());if(onChange)onChange(pos)}
+  function set(p){pos=Math.min(100,Math.max(0,p));if(!own)stage.style.setProperty('--pos',pos+'%');var n=Math.round(pos);grip.setAttribute('aria-valuenow',n);grip.setAttribute('aria-valuetext',n+' percent of the width shows '+label());if(onChange)onChange(pos)}
   function fromEvent(e){var r=stage.getBoundingClientRect();set((e.clientX-r.left)/r.width*100)}
   stage.addEventListener('pointerdown',function(e){if(e.button)return;drag=true;try{stage.setPointerCapture(e.pointerId)}catch(_){}grip.focus({preventScroll:true});fromEvent(e)});
   stage.addEventListener('pointermove',function(e){if(drag)fromEvent(e)});
@@ -28,7 +28,7 @@ function bindSlider(stage,grip,label,onChange){
   grip.addEventListener('keydown',function(e){var s=e.shiftKey?10:2,k=e.key,n=null;
     if(k==='ArrowLeft'||k==='ArrowDown')n=pos-s;else if(k==='ArrowRight'||k==='ArrowUp')n=pos+s;else if(k==='PageDown')n=pos-10;else if(k==='PageUp')n=pos+10;else if(k==='Home')n=0;else if(k==='End')n=100;
     if(n!==null){e.preventDefault();set(n)}});
-  set(50);return {set:set,get:function(){return pos}};
+  set(50);return {set:set,get:function(){return pos},quiet:function(p){pos=p;if(!own)stage.style.setProperty('--pos',p.toFixed(2)+'%');if(onChange)onChange(p)}};
 }
 function gripEl(name){return el('button',{class:'grip',type:'button',role:'slider','aria-label':name,'aria-valuemin':'0','aria-valuemax':'100','aria-orientation':'horizontal',html:GRIP})}
 
@@ -37,28 +37,46 @@ function clipById(id){return D.clips.filter(function(c){return c.id===id})[0]}
 var players=[];
 function makeVideoCompare(host){
   var c=clipById(host.getAttribute('data-clip')),w=c.w,h=c.h,src=c.src||'media/video/'+c.id+'.mp4',poster=c.poster||'media/poster/'+c.id+'.webp';
-  var desc=host.getAttribute('data-desc');
+  var desc=host.getAttribute('data-desc'),hero=host.classList.contains('hero-view');
   var canvas=el('canvas',{width:w,height:h,role:'img','aria-label':desc}),ctx=canvas.getContext('2d',{alpha:false}),video=el('video',{muted:'',loop:'',playsinline:'',preload:'none','aria-hidden':'true',tabindex:'-1'});video.muted=true;
   var grip=gripEl('Comparison split: input on the left, ReLoopVSR on the right');
-  var stage=el('div',{class:'stage',style:'--ar:'+(w/h).toFixed(4)},[canvas,video,el('span',{class:'tag l',text:'Input (bicubic)'}),el('span',{class:'tag r',text:'ReLoopVSR'}),el('div',{class:'split'}),grip]);
+  var marks=[el('span',{class:'tag l',text:'Input (bicubic)'}),el('span',{class:'tag r',text:'ReLoopVSR'}),el('div',{class:'split'}),grip],stage;
+  /* the hero keeps the input on one canvas and the output on a second canvas above it. The split moves only transforms
+     (the output's window slides right while the canvas inside slides back, and the line, handle and labels ride on rails),
+     so sweeping or dragging never repaints or re-lays out anything, and the canvases are redrawn only on new video frames. */
+  var outC=null,octx=null;
+  if(hero){outC=el('canvas',{width:w,height:h,'aria-hidden':'true'});octx=outC.getContext('2d',{alpha:false});
+    stage=el('div',{class:'stage hero-stage'},[canvas,el('div',{class:'outw'},[outC]),video,el('div',{class:'rail'},marks.slice(2)),el('div',{class:'rail tags'},marks.slice(0,2))]);
+    var movers=[].slice.call(stage.querySelectorAll('.outw,.rail')),inner=outC}
+  else stage=el('div',{class:'stage',style:'--ar:'+(w/h).toFixed(4)},[canvas,video].concat(marks));
   var img=new Image(),posterReady=false,usePoster=true,userPaused=false,userPlay=false,failed=false,loaded=false;
   /* two unscaled half draws (left of the split from the input half, right from the output half): no full-frame overdraw, no clip path */
-  function draw(){var s=(!usePoster&&video.readyState>=2)?video:(posterReady?img:null);if(!s)return;
+  function draw(){if(hero){drawHero();return}var s=(!usePoster&&video.readyState>=2)?video:(posterReady?img:null);if(!s)return;
     var ox=c.layout==='h'?w:0,oy=c.layout==='v'?h:0,x=Math.round(w*slider.get()/100);
     if(x<w)ctx.drawImage(s,ox+x,oy,w-x,h,x,0,w-x,h);
     if(x>0)ctx.drawImage(s,0,0,x,h,0,0,x,h)}
-  var slider=bindSlider(stage,grip,function(){return 'the bicubic input'},draw);
+  /* hero: full input and output frames, drawn only when the video has a new frame; the static poster image sits underneath until then */
+  /* hero: the canvases hold only the part of the frame the cover crop shows, at source resolution (a phone draws about a quarter of the frame) */
+  var crop={x:0,y:0,w:w,h:h};
+  function fitHero(){var W=stage.clientWidth,H=stage.clientHeight;if(!W||!H)return;var k=Math.max(W/w,H/h),cw=Math.min(w,Math.round(W/k)),ch=Math.min(h,Math.round(H/k));
+    if(cw===crop.w&&ch===crop.h)return;crop={x:Math.round((w-cw)/2),y:Math.round((h-ch)/2),w:cw,h:ch};canvas.width=outC.width=cw;canvas.height=outC.height=ch;drawHero()}
+  function drawHero(){if(usePoster||video.readyState<2){stage.classList.remove('live');return}
+    var ox=c.layout==='h'?w:0,oy=c.layout==='v'?h:0,q=crop;ctx.drawImage(video,q.x,q.y,q.w,q.h,0,0,q.w,q.h);octx.drawImage(video,ox+q.x,oy+q.y,q.w,q.h,0,0,q.w,q.h);stage.classList.add('live')}
+  /* hero: set each transform directly, so a split change restyles four elements and nothing else */
+  function moveHero(p){var t='translateX('+p.toFixed(3)+'%)';movers.forEach(function(m){m.style.transform=t});inner.style.transform='translateX('+(-p).toFixed(3)+'%)'}
+  var slider=bindSlider(stage,grip,function(){return 'the bicubic input'},hero?moveHero:draw,hero);
   img.onload=function(){posterReady=true;draw()};
-  var pb=el('button',{class:'play',type:'button'});
+  /* the hero's button ships in the HTML (hidden until this runs) so the caption does not move when it appears */
+  var pb=(hero&&$('#hero-play'))||el('button',{class:'play',type:'button'});if(hero)pb.classList.add('on');
   function ui(){var p=!video.paused;pb.innerHTML=(p?PAUSE:PLAY)+'<span>'+(p?'Pause':'Play')+'</span>';pb.setAttribute('aria-label',(p?'Pause':'Play')+' this clip')}
   var loop;
   function tick(){if(video.paused)return;usePoster=false;draw();schedule()}
   function schedule(){if(video.requestVideoFrameCallback)video.requestVideoFrameCallback(tick);else requestAnimationFrame(tick)}
-  video.addEventListener('play',function(){ui();schedule()});video.addEventListener('pause',ui);
+  video.addEventListener('play',function(){ui();schedule();if(hero)sweep.start()});video.addEventListener('pause',function(){ui();if(hero)sweep.stop()});
   video.addEventListener('loadeddata',function(){if(video.paused&&video.currentTime===0){/* keep the poster until playing */}});
   video.addEventListener('seeked',function(){usePoster=false;draw()});
-  video.addEventListener('error',function(){failed=true;usePoster=true;pb.disabled=true;draw();var m=el('p',{class:'vid-err',text:'This browser could not decode the clip; a still frame is shown and the slider still works.'});host.querySelector('.bar-ctl').appendChild(m);ui()});
-  function ensure(){if(!img.src)img.src=poster}
+  video.addEventListener('error',function(){failed=true;usePoster=true;pb.disabled=true;draw();var m=el('p',{class:'vid-err',text:'This browser could not decode the clip; a still frame is shown and the slider still works.'});var bc=host.querySelector('.bar-ctl');if(bc)bc.appendChild(m);ui()});
+  function ensure(){if(!img.src&&!hero)img.src=poster}
   function load(){ensure();if(!loaded){loaded=true;video.preload='auto';video.src=src}}
   /* a clip that scrolled far away stops downloading; playback later resumes from the same position */
   var resumeAt=0;
@@ -73,9 +91,34 @@ function makeVideoCompare(host){
   if(c.audio){sb=el('button',{class:'play snd',type:'button','aria-pressed':'false'});
     sui=function(){var on=!video.muted;sb.innerHTML='<span>'+(on?'Sound on':'Sound off')+'</span>';sb.setAttribute('aria-pressed',on);sb.setAttribute('aria-label',(on?'Mute':'Unmute')+' this clip')};
     sb.addEventListener('click',function(){video.muted=!video.muted;if(!video.muted){players.forEach(function(o){if(o.video!==video)o.video.muted=true;if(o.sui)o.sui()});if(video.paused){userPaused=false;userPlay=true;play()}}sui()});sui()}
+  /* hero: while the clip plays, the split sweeps slowly between 20% and 80% as Web Animations on the transforms, which the compositor runs
+     without main-thread work; pausing the clip (off screen, hidden tab, Pause button) stops it. A drag, key press or keyboard focus holds
+     the split; 6 s after the last touch the sweep glides back from wherever the viewer left it. */
+  var sweep={start:function(){},stop:function(){}};
+  if(hero&&stage.animate){var T=16000,A=30,anims=null,holdUntil=0,timer=0,N=48,fw=[],bw=[];
+    for(var i=0;i<=N;i++){var v=50+A*Math.sin(2*Math.PI*i/N);fw.push({transform:'translateX('+v.toFixed(3)+'%)'});bw.push({transform:'translateX('+(-v).toFixed(3)+'%)'})}
+    var at=function(t){return 50+A*Math.sin(2*Math.PI*t/T)};
+    var run=function(f,b,o){return movers.map(function(m){return m.animate(f,o)}).concat([inner.animate(b,o)])};
+    var stop=function(sync){if(!anims)return;var t=anims[0].currentTime||0,p=anims.loop?at(t):null;if(p===null&&anims.from!==undefined){var k=Math.min(1,t/anims.d);k=k*k*(3-2*k);p=anims.from+(anims.to-anims.from)*k}
+      anims.forEach(function(x){x.cancel()});anims=null;if(sync&&p!==null)slider.quiet(p)};
+    var loop=function(t0){anims=run(fw,bw,{duration:T,iterations:Infinity});anims.forEach(function(x){x.currentTime=t0});anims.loop=true};
+    var start=function(){if(anims||REDUCED.matches||video.paused||performance.now()<holdUntil||document.activeElement===grip)return;
+      var p=slider.get(),q=(p-50)/A;
+      if(Math.abs(q)<=1){var t=Math.asin(q)*T/(2*Math.PI);loop(t<0?t+T:t);return}
+      /* outside the sweep range: glide to the nearer end first, then continue the loop from there */
+      var to=q>0?50+A:50-A,d=Math.max(400,Math.abs(p-to)*90),o={duration:d,easing:'ease-in-out',fill:'forwards'};
+      anims=run([{transform:'translateX('+p+'%)'},{transform:'translateX('+to+'%)'}],[{transform:'translateX('+(-p)+'%)'},{transform:'translateX('+(-to)+'%)'}],o);anims.from=p;anims.to=to;anims.d=d;
+      var mine=anims;anims[0].onfinish=function(){if(anims!==mine)return;mine.forEach(function(x){x.cancel()});anims=null;slider.quiet(to);loop(q>0?T/4:3*T/4)}};
+    var later=function(){clearTimeout(timer);timer=setTimeout(start,Math.max(0,holdUntil-performance.now())+20)};
+    var hold=function(sync){stop(sync);holdUntil=performance.now()+6000;later()};
+    sweep={start:start,stop:function(){stop(true)}};
+    stage.addEventListener('pointerdown',function(){hold(false)});stage.addEventListener('pointermove',function(e){if(e.buttons)hold(false)});
+    grip.addEventListener('keydown',function(){hold(false)});
+    grip.addEventListener('focus',function(){hold(true);slider.set(slider.get())});grip.addEventListener('blur',function(){hold(false)})}
   var meta=el('div',{class:'cap',html:host.getAttribute('data-cap')||''});
-  if(host.closest('.card')){var fr=el('div',{class:'frame'+(h>w?' p':'')});fr.appendChild(stage);host.appendChild(fr)}else host.appendChild(stage);host.appendChild(el('div',{class:'bar-ctl'},[pb,sb,meta]));
-  var p={host:host,video:video,ensure:ensure,release:release,enter:function(){ensure();if(!userPaused&&!REDUCED.matches)play()},leave:function(){userPlay=false;if(!video.paused)video.pause()},hold:function(){if(!userPlay&&!video.paused)video.pause()},wants:function(){return !userPaused&&!failed},ratio:0,slider:slider,stage:stage,sui:sui};
+  if(hero){host.appendChild(stage);fitHero();if(window.ResizeObserver)new ResizeObserver(fitHero).observe(stage);else addEventListener('resize',fitHero);var hc=$('.hero-cap');if(hc&&!pb.parentNode)hc.insertBefore(pb,hc.firstChild)}
+  else if(host.closest('.card')){var fr=el('div',{class:'frame'+(h>w?' p':'')});fr.appendChild(stage);host.appendChild(fr)}else host.appendChild(stage);if(!hero)host.appendChild(el('div',{class:'bar-ctl'},[pb,sb,meta]));
+  var p={host:host,video:video,ensure:ensure,release:release,enter:function(){ensure();if(!userPaused&&!REDUCED.matches){if(hero&&document.readyState!=='complete'){if(!p.waiting){p.waiting=true;window.addEventListener('load',function(){if(p.ratio>=.35&&!document.hidden)p.enter()},{once:true})}}else play()}},leave:function(){userPlay=false;if(!video.paused)video.pause()},hold:function(){if(!userPlay&&!video.paused)video.pause()},wants:function(){return !userPaused&&!failed},ratio:0,slider:slider,stage:stage,sui:sui};
   players.push(p);return p;
 }
 $$('[data-clip]').forEach(makeVideoCompare);
