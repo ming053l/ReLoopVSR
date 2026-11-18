@@ -216,7 +216,15 @@ footer .wrap{display:grid;gap:12px}
 @media (max-width:900px){.feature.wide .ft{grid-template-columns:minmax(0,1fr)}}
 /* touch targets at phone width */
 @media (max-width:620px){.play,.race-ctl .play{height:44px}.seg button{height:42px;width:44px}.tab{min-height:44px}.links a{padding:11px}.icon-btn{width:44px;height:44px}}
-.chip span{display:block;min-height:2.7em}
+.chip>span{display:block;min-height:2.7em}
+/* finished badge (lanes and chips): accent check-mark with the measured finish time; reset on Replay and on a resolution or K change */
+.rdone{display:inline-flex;align-items:center;gap:4px;padding:1px 7px 1px 5px;border-radius:99px;background:var(--accent);color:var(--on-accent);font:600 11.5px/1.5 "JetBrains Mono",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;white-space:nowrap;opacity:0;transform:scale(.85);transition:opacity .25s ease,transform .25s ease;visibility:hidden}
+.rdone svg{width:11px;height:11px;flex:none}.done>.rv .rdone,.chip.done .rdone{opacity:1;transform:none;visibility:visible}
+.rv .rdone{position:absolute;right:6px;top:6px;box-shadow:0 1px 4px rgb(0 0 0/.35)}
+.rp.done .rc2{background:var(--accent);color:var(--on-accent)}
+.ch{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:2px 6px;min-width:0}.ch b{min-width:0}.ch .rdone{flex:none;font-size:10.5px;padding:0 6px 0 4px}.ch .rdone svg{width:10px;height:10px}
+.chip.done{border-color:var(--accent)}
+@media (max-width:760px){.rv .rdone{top:auto;left:auto;right:6px;bottom:6px}.rp.done .rc2{visibility:hidden}}
 /* 2026-11-17: five key numbers, teaser figure, narrow figures */
 .stats{grid-template-columns:repeat(5,1fr)}@media (max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}}
 .fig-wrap.teaser{max-width:1080px;margin:28px auto 0}.fig-wrap.teaser figcaption{max-width:none}
@@ -230,10 +238,16 @@ footer .wrap{display:grid;gap:12px}
 .hero-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;-webkit-user-drag:none;user-select:none}
 .hero-stage.stage{position:absolute;inset:0;width:auto;height:auto;margin:0;aspect-ratio:auto;background:transparent;border-radius:0;box-shadow:none;cursor:ew-resize}
 .hero-stage canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .4s ease}.hero-stage.live canvas{opacity:1}
-.hero-stage .outw{position:absolute;inset:0;overflow:hidden;transform:translateX(50%);will-change:transform}.hero-stage .outw canvas{transform:translateX(-50%);will-change:transform}
-.hero-stage .rail{position:absolute;inset:0;transform:translateX(50%);will-change:transform;pointer-events:none;opacity:0;transition:opacity .4s ease}.hero-stage.live .rail,.hero-stage .rail:focus-within{opacity:1}
-.hero-stage .split{left:0}.hero-stage .grip{left:0;width:38px;height:38px;pointer-events:auto}.hero-stage .grip svg{width:19px;height:19px}
-.hero-stage .rail.tags{z-index:3}.hero-stage .tag{top:16px;bottom:auto}.hero-stage .tag.l{left:auto;right:calc(100% + 10px)}.hero-stage .tag.r{left:10px;right:auto}
+/* slanted divider (tan 0.36, leaning right going up): the output window is twice the stage width and skewed about its left edge's midpoint,
+   the canvas inside carries the inverse transform; the split value is the line's position at mid-height (app.js heroTf) */
+.hero-stage .outw{position:absolute;top:0;bottom:0;left:0;width:200%;overflow:hidden;transform-origin:0 50%;transform:translateX(25%) skewX(-19.799deg);will-change:transform}
+.hero-stage .outw canvas{right:auto;width:50%;transform-origin:0 50%;transform:skewX(19.799deg) translateX(-50%);will-change:transform}
+.hero-stage .rail{position:absolute;inset:0;transform-origin:0 50%;transform:translateX(50%);will-change:transform;pointer-events:none;opacity:0;transition:opacity .4s ease}.hero-stage .rail.ln{transform:translateX(50%) skewX(-19.799deg)}.hero-stage.live .rail,.hero-stage .rail:focus-within{opacity:1}
+.hero-stage .split{left:0;width:2px;margin-left:-1px;background:rgb(255 255 255/.92);box-shadow:0 0 0 .5px rgb(0 0 0/.35)}.hero-stage .grip{left:0;width:34px;height:34px;pointer-events:auto}.hero-stage .grip svg{width:17px;height:17px}
+/* method labels in the bottom corners; the caption and Pause button sit above the right one */
+.hero-stage .htags{position:absolute;inset:0;z-index:3;pointer-events:none;opacity:0;transition:opacity .4s ease}.hero-stage.live .htags{opacity:1}
+.hero-stage .htags .tag{top:auto;bottom:20px;padding:5px 12px;border-radius:9px;background:rgb(15 20 24/.8);color:#fff;font-size:clamp(15px,1.2vw,18px);font-weight:700;line-height:1.3;letter-spacing:-.005em;box-shadow:0 1px 6px rgb(0 0 0/.25)}
+[data-dark=true] .hero-stage .htags .tag{background:rgb(8 11 14/.82);box-shadow:0 0 0 1px rgb(255 255 255/.2),0 1px 6px rgb(0 0 0/.4)}.hero-stage .htags .tag.l{left:24px}.hero-stage .htags .tag.r{right:24px;left:auto}
 .hero-fade{position:absolute;inset:0;z-index:2;pointer-events:none;background:
   linear-gradient(90deg,color-mix(in srgb,var(--bg) 92%,transparent) 0,color-mix(in srgb,var(--bg) 86%,transparent) calc(var(--x0) + var(--tw)),color-mix(in srgb,var(--bg) 45%,transparent) calc(var(--x0) + var(--tw) + 150px),transparent calc(var(--x0) + var(--tw) + 340px)),
   linear-gradient(180deg,color-mix(in srgb,var(--bg) 55%,transparent) 0,transparent 13%,transparent 74%,var(--bg) 100%)}
@@ -246,7 +260,7 @@ footer .wrap{display:grid;gap:12px}
 .hero .btns{justify-content:flex-start;margin-top:4px}
 .hero-stats.stats{display:grid;grid-template-columns:repeat(5,auto);justify-content:start;gap:8px 26px;margin:16px 0 0;max-width:none;background:none;border:0;border-radius:0;overflow:visible}
 .hero-stats.stats div{background:none;padding:0;max-width:128px}.hero-stats.stats b{font-size:23px;font-weight:700;white-space:nowrap}.hero-stats.stats span{display:block;font-size:12px;line-height:1.35;color:var(--ink-2)}
-.hero-cap{position:absolute;right:24px;bottom:20px;z-index:4;display:flex;align-items:center;gap:10px;max-width:none;font-size:12px;line-height:1.4;color:var(--ink-2);text-align:right}.hero-cap>span{white-space:nowrap;padding:4px 9px;border-radius:8px;background:color-mix(in srgb,var(--bg) 78%,transparent)}
+.hero-cap{position:absolute;right:24px;bottom:66px;z-index:4;display:flex;align-items:center;gap:10px;max-width:none;font-size:12px;line-height:1.4;color:var(--ink-2);text-align:right}.hero-cap>span{white-space:nowrap;padding:4px 9px;border-radius:8px;background:color-mix(in srgb,var(--bg) 78%,transparent)}
 .hero-cap b{color:var(--ink);font-weight:600}.hero-cap .play:not(.on){visibility:hidden}.hero-cap .play{height:30px;padding:0 10px;font-size:12.5px;flex:none;background:color-mix(in srgb,var(--surface) 88%,transparent)}
 .scroll-cue{position:absolute;left:50%;bottom:22px;z-index:4;width:24px;height:38px;border:1.5px solid color-mix(in srgb,var(--ink) 35%,transparent);border-radius:14px;transform:translateX(-50%)}
 .scroll-cue span{position:absolute;left:50%;top:7px;width:3px;height:7px;margin-left:-1.5px;border-radius:2px;background:var(--ink);opacity:0;animation:cue 1.8s .6s 8}
@@ -256,7 +270,7 @@ footer .wrap{display:grid;gap:12px}
   .hero-text{margin:0 auto;justify-items:center;text-align:center}.hero .btns{justify-content:center}
   .hero-fade{background:linear-gradient(180deg,color-mix(in srgb,var(--bg) 90%,transparent) 0,color-mix(in srgb,var(--bg) 80%,transparent) 55%,color-mix(in srgb,var(--bg) 40%,transparent) 80%,var(--bg) 100%)}
   .hero-stats.stats{grid-template-columns:repeat(2,auto);justify-content:center;gap:14px 30px}.hero-stats.stats div{max-width:150px}
-  .hero-cap{left:16px;right:16px;bottom:66px;max-width:none;justify-content:center;text-align:left}.hero-cap>span{white-space:normal;text-wrap:balance}.hero-stage .outw,.hero-stage .outw canvas{transform:none!important}.hero-stage .rail{display:none}.hero-poster{object-position:100% 50%}.hero-stage.stage{cursor:auto}.scroll-cue{bottom:16px}.hero-stage .tag,.hero-stage .grip:not(:focus-visible){display:none}}
+  .hero-cap{left:16px;right:16px;bottom:66px;max-width:none;justify-content:center;text-align:left}.hero-cap>span{white-space:normal;text-wrap:balance}.hero-stage .outw,.hero-stage .outw canvas{transform:none!important}.hero-stage .rail,.hero-stage .htags{display:none}.hero-poster{object-position:100% 50%}.hero-stage.stage{cursor:auto}.scroll-cue{bottom:16px}.hero-stage .tag,.hero-stage .grip:not(:focus-visible){display:none}}
 @media (max-height:780px) and (min-width:801px){.hero-inner{padding-top:26px;padding-bottom:74px}.hero-text{gap:9px}.hero-title{gap:6px}.hero-title em{font-size:clamp(48px,10.5vh,84px)}.hero .lede{font-size:15.5px;line-height:1.55}.hero-stats.stats{margin-top:8px}}
 @media (max-width:620px){.hero{--nav-h:109px}.hero-stats.stats b{font-size:20px}}
-@media (prefers-reduced-motion:reduce){.scroll-cue span{animation:none}.hero-stage canvas,.hero-stage .rail{transition:none}}
+@media (prefers-reduced-motion:reduce){.scroll-cue span{animation:none}.hero-stage canvas,.hero-stage .rail,.hero-stage .htags{transition:none}.rdone{transition:none!important}}

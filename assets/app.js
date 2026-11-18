@@ -18,10 +18,10 @@ if('IntersectionObserver' in window){var navLinks=$$('.links a');var so=new Inte
 navLinks.forEach(function(a){var t=$(a.getAttribute('href'));if(t)so.observe(t)})}
 
 /* slider core: pointer, touch and keyboard all funnel into set() */
-function bindSlider(stage,grip,label,onChange,own){
+function bindSlider(stage,grip,label,onChange,own,tan){
   var pos=50,drag=false;
   function set(p){pos=Math.min(100,Math.max(0,p));if(!own)stage.style.setProperty('--pos',pos+'%');var n=Math.round(pos);grip.setAttribute('aria-valuenow',n);grip.setAttribute('aria-valuetext',n+' percent of the width shows '+label());if(onChange)onChange(pos)}
-  function fromEvent(e){var r=stage.getBoundingClientRect();set((e.clientX-r.left)/r.width*100)}
+  function fromEvent(e){var r=stage.getBoundingClientRect(),x=e.clientX-r.left;if(tan)x-=(r.height/2-(e.clientY-r.top))*tan;set(x/r.width*100)}
   stage.addEventListener('pointerdown',function(e){if(e.button)return;drag=true;try{stage.setPointerCapture(e.pointerId)}catch(_){}grip.focus({preventScroll:true});fromEvent(e)});
   stage.addEventListener('pointermove',function(e){if(drag)fromEvent(e)});
   ['pointerup','pointercancel','lostpointercapture'].forEach(function(t){stage.addEventListener(t,function(){drag=false})});
@@ -41,13 +41,17 @@ function makeVideoCompare(host){
   var canvas=el('canvas',{width:w,height:h,role:'img','aria-label':desc}),ctx=canvas.getContext('2d',{alpha:false}),video=el('video',{muted:'',loop:'',playsinline:'',preload:'none','aria-hidden':'true',tabindex:'-1'});video.muted=true;
   var grip=gripEl('Comparison split: input on the left, ReLoopVSR on the right');
   var marks=[el('span',{class:'tag l',text:'Input (bicubic)'}),el('span',{class:'tag r',text:'ReLoopVSR'}),el('div',{class:'split'}),grip],stage;
-  /* the hero keeps the input on one canvas and the output on a second canvas above it. The split moves only transforms
-     (the output's window slides right while the canvas inside slides back, and the line, handle and labels ride on rails),
-     so sweeping or dragging never repaints or re-lays out anything, and the canvases are redrawn only on new video frames. */
-  var outC=null,octx=null;
+  /* the hero keeps the input on one canvas and the output on a second canvas above it. The divider is slanted (it leans right going up,
+     tan 0.36): the output's window is a wide box skewed about its left edge's midpoint, so its clipped left edge is the slanted line, and the
+     canvas inside carries the exact inverse transform. Moving the divider changes only transforms (window, canvas, line rail, handle rail),
+     so the motion and dragging never repaint or re-lay out anything, and the canvases are redrawn only on new video frames.
+     The split value is the line's position at mid-height, where the handle sits. The method labels stay in the bottom corners. */
+  var outC=null,octx=null,TAN=.36,SK=(Math.atan(TAN)*180/Math.PI).toFixed(3),outw,lineR,gripR;
+  function heroTf(p){var a=p.toFixed(3);return [ 'translateX('+(p/2).toFixed(3)+'%) skewX(-'+SK+'deg)','skewX('+SK+'deg) translateX(-'+a+'%)','translateX('+a+'%) skewX(-'+SK+'deg)','translateX('+a+'%)']}
   if(hero){outC=el('canvas',{width:w,height:h,'aria-hidden':'true'});octx=outC.getContext('2d',{alpha:false});
-    stage=el('div',{class:'stage hero-stage'},[canvas,el('div',{class:'outw'},[outC]),video,el('div',{class:'rail'},marks.slice(2)),el('div',{class:'rail tags'},marks.slice(0,2))]);
-    var movers=[].slice.call(stage.querySelectorAll('.outw,.rail')),inner=outC}
+    outw=el('div',{class:'outw'},[outC]);lineR=el('div',{class:'rail ln'},[marks[2]]);gripR=el('div',{class:'rail gr'},[marks[3]]);
+    stage=el('div',{class:'stage hero-stage'},[canvas,outw,video,lineR,gripR,el('div',{class:'htags'},marks.slice(0,2))]);
+    var movers=[outw,outC,lineR,gripR]}
   else stage=el('div',{class:'stage',style:'--ar:'+(w/h).toFixed(4)},[canvas,video].concat(marks));
   var img=new Image(),posterReady=false,usePoster=true,userPaused=false,userPlay=false,failed=false,loaded=false;
   /* two unscaled half draws (left of the split from the input half, right from the output half): no full-frame overdraw, no clip path */
@@ -63,8 +67,10 @@ function makeVideoCompare(host){
   function drawHero(){if(usePoster||video.readyState<2){stage.classList.remove('live');return}
     var ox=c.layout==='h'?w:0,oy=c.layout==='v'?h:0,q=crop;ctx.drawImage(video,q.x,q.y,q.w,q.h,0,0,q.w,q.h);octx.drawImage(video,ox+q.x,oy+q.y,q.w,q.h,0,0,q.w,q.h);stage.classList.add('live')}
   /* hero: set each transform directly, so a split change restyles four elements and nothing else */
-  function moveHero(p){var t='translateX('+p.toFixed(3)+'%)';movers.forEach(function(m){m.style.transform=t});inner.style.transform='translateX('+(-p).toFixed(3)+'%)'}
-  var slider=bindSlider(stage,grip,function(){return 'the bicubic input'},hero?moveHero:draw,hero);
+  function moveHero(p){var t=heroTf(p);movers.forEach(function(m,i){m.style.transform=t[i]})}
+  var slider=bindSlider(stage,grip,function(){return 'the bicubic input'},hero?moveHero:draw,hero,hero?TAN:0);
+  /* the hero's cycle starts with the hold at 18% */
+  if(hero)slider.set(18);
   img.onload=function(){posterReady=true;draw()};
   /* the hero's button ships in the HTML (hidden until this runs) so the caption does not move when it appears */
   var pb=(hero&&$('#hero-play'))||el('button',{class:'play',type:'button'});if(hero)pb.classList.add('on');
@@ -91,24 +97,28 @@ function makeVideoCompare(host){
   if(c.audio){sb=el('button',{class:'play snd',type:'button','aria-pressed':'false'});
     sui=function(){var on=!video.muted;sb.innerHTML='<span>'+(on?'Sound on':'Sound off')+'</span>';sb.setAttribute('aria-pressed',on);sb.setAttribute('aria-label',(on?'Mute':'Unmute')+' this clip')};
     sb.addEventListener('click',function(){video.muted=!video.muted;if(!video.muted){players.forEach(function(o){if(o.video!==video)o.video.muted=true;if(o.sui)o.sui()});if(video.paused){userPaused=false;userPlay=true;play()}}sui()});sui()}
-  /* hero: while the clip plays, the split sweeps slowly between 20% and 80% as Web Animations on the transforms, which the compositor runs
-     without main-thread work; pausing the clip (off screen, hidden tab, Pause button) stops it. A drag, key press or keyboard focus holds
-     the split; 6 s after the last touch the sweep glides back from wherever the viewer left it. */
+  /* hero: while the clip plays, the divider holds 1.6 s at 18%, slides 1.4 s (ease-in-out) to 82%, holds 1.6 s and slides back (6 s cycle),
+     as Web Animations on the transforms, which the compositor runs without main-thread work; pausing the clip (off screen, hidden tab,
+     Pause button) stops it. A drag, key press or keyboard focus holds the divider; 6 s after the last touch it glides to the nearer end
+     and the cycle continues from that hold. */
   var sweep={start:function(){},stop:function(){}};
-  if(hero&&stage.animate){var T=16000,A=30,anims=null,holdUntil=0,timer=0,N=48,fw=[],bw=[];
-    for(var i=0;i<=N;i++){var v=50+A*Math.sin(2*Math.PI*i/N);fw.push({transform:'translateX('+v.toFixed(3)+'%)'});bw.push({transform:'translateX('+(-v).toFixed(3)+'%)'})}
-    var at=function(t){return 50+A*Math.sin(2*Math.PI*t/T)};
-    var run=function(f,b,o){return movers.map(function(m){return m.animate(f,o)}).concat([inner.animate(b,o)])};
-    var stop=function(sync){if(!anims)return;var t=anims[0].currentTime||0,p=anims.loop?at(t):null;if(p===null&&anims.from!==undefined){var k=Math.min(1,t/anims.d);k=k*k*(3-2*k);p=anims.from+(anims.to-anims.from)*k}
-      anims.forEach(function(x){x.cancel()});anims=null;if(sync&&p!==null)slider.quiet(p)};
-    var loop=function(t0){anims=run(fw,bw,{duration:T,iterations:Infinity});anims.forEach(function(x){x.currentTime=t0});anims.loop=true};
+  if(hero&&stage.animate){var T=6000,L=18,R=82,EZ='cubic-bezier(.3333,0,.6667,1)',anims=null,holdUntil=0,timer=0;
+    /* cubic-bezier(1/3,0,2/3,1) is exactly smoothstep, so at() below matches what the compositor draws */
+    var ss=function(k){k=Math.min(1,Math.max(0,k));return k*k*(3-2*k)};
+    var at=function(t){t=((t%T)+T)%T;if(t<1600)return L;if(t<3000)return L+(R-L)*ss((t-1600)/1400);if(t<4600)return R;return R+(L-R)*ss((t-4600)/1400)};
+    var kf=function(stops){return movers.map(function(m,i){return stops.map(function(x){var o={transform:heroTf(x[1])[i],offset:x[0]};if(x[2])o.easing=x[2];return o})})};
+    var CYC=kf([[0,L],[1600/T,L,EZ],[3000/T,R],[4600/T,R,EZ],[1,L]]);
+    var run=function(keys,o){return movers.map(function(m,i){return m.animate(keys[i],o)})};
+    var stop=function(sync){if(!anims)return;var t=anims[0].currentTime||0,p=anims.loop?at(t):anims.from+(anims.to-anims.from)*ss(t/anims.d);
+      anims.forEach(function(x){x.cancel()});anims=null;if(sync)slider.quiet(p)};
+    var loop=function(t0){anims=run(CYC,{duration:T,iterations:Infinity});anims.forEach(function(x){x.currentTime=t0});anims.loop=true};
     var start=function(){if(anims||REDUCED.matches||matchMedia('(max-width:800px)').matches||video.paused||performance.now()<holdUntil||document.activeElement===grip)return;
-      var p=slider.get(),q=(p-50)/A;
-      if(Math.abs(q)<=1){var t=Math.asin(q)*T/(2*Math.PI);loop(t<0?t+T:t);return}
-      /* outside the sweep range: glide to the nearer end first, then continue the loop from there */
-      var to=q>0?50+A:50-A,d=Math.max(400,Math.abs(p-to)*90),o={duration:d,easing:'ease-in-out',fill:'forwards'};
-      anims=run([{transform:'translateX('+p+'%)'},{transform:'translateX('+to+'%)'}],[{transform:'translateX('+(-p)+'%)'},{transform:'translateX('+(-to)+'%)'}],o);anims.from=p;anims.to=to;anims.d=d;
-      var mine=anims;anims[0].onfinish=function(){if(anims!==mine)return;mine.forEach(function(x){x.cancel()});anims=null;slider.quiet(to);loop(q>0?T/4:3*T/4)}};
+      var p=slider.get(),to=p>=50?R:L,t0=to===L?0:3000;
+      if(Math.abs(p-to)<.3){loop(t0);return}
+      /* away from the hold position: glide there first at about the slide's pace, then continue the cycle from that hold */
+      var d=Math.max(450,Math.abs(p-to)*22);
+      anims=run(kf([[0,p,EZ],[1,to]]),{duration:d,fill:'forwards'});anims.from=p;anims.to=to;anims.d=d;
+      var mine=anims;anims[0].onfinish=function(){if(anims!==mine)return;mine.forEach(function(x){x.cancel()});anims=null;slider.quiet(to);loop(t0)}};
     var later=function(){clearTimeout(timer);timer=setTimeout(start,Math.max(0,holdUntil-performance.now())+20)};
     var hold=function(sync){stop(sync);holdUntil=performance.now()+6000;later()};
     sweep={start:start,stop:function(){stop(true)}};
@@ -144,11 +154,16 @@ if('IntersectionObserver' in window){
   function cellsOf(r){var out=[];r.cells.forEach(function(c){var n=c[3]||1;if(n>1){for(var i=0;i<n;i++)out.push(c[0])}else out.push(c[0])});return out}
   function timing(name,i){var r=ROW[name];if(!r)return {oom:true,why:'n/a'};var c=cellsOf(r),f=c[3*i],tt=c[3*i+1];var fps=parseFloat(f),ttff=parseFloat(tt);
     if(isNaN(fps)||isNaN(ttff))return {oom:true,why:f};return {fps:fps,ttff:ttff,fpsTxt:f.replace(/[†‡]/g,''),ttffTxt:tt.replace(/[†‡]/g,''),total:Math.max(N/fps,ttff),flag:/[†‡]/.test(f+tt)}}
+  /* finished badge: shown on a lane or chip once it has delivered all 100 frames; the time is the measured finish on the shared clock */
+  var CHECK='<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m2.5 6.3 2.3 2.3 4.7-5"/></svg>';
+  function secs(x){return (x<10?x.toFixed(2):x.toFixed(1))+' s'}
+  function badge(){return el('span',{class:'rdone'})}
+  function setDone(m,on){if(m.__d===on)return;m.__d=on;m.el.classList.toggle('done',on);m.dn.innerHTML=on?CHECK+'<span>'+(m.chip?'<span class="vh">Done at </span>':'Done ')+secs(m.tm.total)+'</span>':''}
   function fastName(k){return 'ReLoopVSR-fast (K='+(k||K)+')'}
   function frames(m,t){if(!m.tm||m.tm.oom)return 0;var a=m.tm.ttff,b=m.tm.total;if(t<a)return 0;if(b<=a||t>=b)return N;return Math.min(N,1+Math.floor((t-a)/(b-a)*(N-1)))}
   D.raceFrames=frames;
-  var panels=[{src:'fast',key:'reloopvsr',ours:true},{src:'ReLoopVSR-base',key:'reloopvsr',ours:true},{src:'InfVSR',key:'infvsr'},{src:'Stream-DiffVSR',key:'sdvsr'}];
-  var chips=['RelayVSR','ReCaVSR','FastVR','SwiftVR','FlashVSR-Tiny','FlashVSR+','DOVE','SeedVR2-3B','PS-SR','STAR'].map(function(n){return {src:n}});
+  var panels=[{src:'fast',key:'reloopvsr',ours:true},{src:'ReLoopVSR-base',key:'reloopvsr',ours:true},{src:'FlashVSR+',key:'flashvsr_plus'},{src:'RelayVSR',key:'relayvsr'}];
+  var chips=['InfVSR','Stream-DiffVSR','ReCaVSR','FastVR','SwiftVR','FlashVSR-Tiny','DOVE','SeedVR2-3B','PS-SR','STAR'].map(function(n){return {src:n}});
   D.raceMethods=panels.concat(chips);
   var END=1;
   function retime(){panels.concat(chips).forEach(function(m){m.name=m.src==='fast'?fastName():m.src;m.tm=timing(m.name,ri)});
@@ -161,12 +176,12 @@ if('IntersectionObserver' in window){
   var host=$('#race-panels');
   panels.forEach(function(m){var v=el('video',{muted:'',playsinline:'',preload:'auto',tabindex:'-1','data-src':'media/race/'+m.key+'.mp4'});v.muted=true;
     var w=el('div',{class:'rw'}),rn=el('span',{class:'rn'}),meta=el('span',{class:'rmeta'});
-    var p=el('div',{class:'rp'+(m.ours?' ours':''),'data-m':m.key},[el('div',{class:'rv'},[v,w,rn,meta,el('span',{class:'rc2',text:'0 / 100'})]),el('div',{class:'rb'},[el('i')])]);
-    host.appendChild(p);m.el=p;m.v=v;m.w=w;m.rn=rn;m.meta=meta;m.cnt=$('.rc2',p);m.bar=$('.rb i',p);m.shown=-1;
+    var p=el('div',{class:'rp'+(m.ours?' ours':''),'data-m':m.key},[el('div',{class:'rv'},[v,w,rn,meta,el('span',{class:'rc2',text:'0 / 100'}),badge()]),el('div',{class:'rb'},[el('i')])]);
+    host.appendChild(p);m.el=p;m.v=v;m.w=w;m.rn=rn;m.meta=meta;m.cnt=$('.rc2',p);m.dn=$('.rdone',p);m.bar=$('.rb i',p);m.shown=-1;
     v.addEventListener('error',function(){w.innerHTML='<span>Clip unavailable</span>';m.broken=true});
     v.addEventListener('seeked',function(){m.seeking=false;seek(m)});v.addEventListener('loadeddata',function(){seek(m)})});
   var chost=$('#race-chips');
-  chips.forEach(function(m){var s=el('span',{text:''}),b=el('b');m.el=el('div',{class:'chip'},[b,s]);m.st=s;m.b=b;chost.appendChild(m.el)});
+  chips.forEach(function(m){var s=el('span',{text:''}),b=el('b'),d=badge();m.el=el('div',{class:'chip'},[el('div',{class:'ch'},[b,d]),s]);m.st=s;m.b=b;m.dn=d;m.chip=true;chost.appendChild(m.el)});
   var inp=$('.rp-in',root),iv=$('video',inp),icnt=$('.rc',inp),ibar=$('.rb i',inp);iv.muted=true;
   var IN={v:iv,shown:-1,want:0};iv.addEventListener('seeked',function(){IN.seeking=false;seek(IN)});iv.addEventListener('loadeddata',function(){seek(IN)});
   var clock=$('#race-clock'),note=$('#race-speed-note'),pbtn=$('#race-pause'),t=0,speed=1,running=false,last=0,started=false,autoPaused=false,userPaused=false,inView=false;
@@ -176,8 +191,8 @@ if('IntersectionObserver' in window){
   function wid(n,k){if(n.__w!==k){n.__w=k;n.style.width=k+'%'}}
   function paint(){
     txt(clock,t.toFixed(1)+' s');
-    panels.forEach(function(m){var k=frames(m,t);m.want=k;if(m.__live!==(k>0)){m.__live=k>0;m.el.classList.toggle('live',k>0)}txt(m.cnt,m.tm.oom?'OOM':k+' / 100');wid(m.bar,k);seek(m)});
-    chips.forEach(function(m){if(m.tm.oom){txt(m.st,(m.tm.why==='OOM'?'OOM':m.tm.why)+' at '+RL[ri]+', not raced');return}var k=frames(m,t);txt(m.st,k?(k+' / 100 frames'):('0 / 100, first frame at '+m.tm.ttffTxt+' s'))});
+    panels.forEach(function(m){var k=frames(m,t);m.want=k;if(m.__live!==(k>0)){m.__live=k>0;m.el.classList.toggle('live',k>0)}txt(m.cnt,m.tm.oom?'OOM':k+' / 100');wid(m.bar,k);setDone(m,k===N);seek(m)});
+    chips.forEach(function(m){if(m.tm.oom){setDone(m,false);txt(m.st,(m.tm.why==='OOM'?'OOM':m.tm.why)+' at '+RL[ri]+', not raced');return}var k=frames(m,t);setDone(m,k===N);txt(m.st,k?(k+' / 100 frames'):('0 / 100, first frame at '+m.tm.ttffTxt+' s'))});
     var a=frames(panels[0],t);txt(icnt,a+' / 100');wid(ibar,a);IN.want=a;seek(IN);
   }
   function loop(now){if(!running)return;var dt=Math.min(.25,(now-last)/1000);last=now;t=Math.min(END,t+dt*speed);paint();if(t>=END){running=false;pbtn.textContent='Pause';pbtn.disabled=true;return}requestAnimationFrame(loop)}
@@ -189,7 +204,7 @@ if('IntersectionObserver' in window){
   $$('.seg[data-g=speed] button',root).forEach(function(b){b.addEventListener('click',function(){speed=+b.getAttribute('data-s');$$('.seg[data-g=speed] button',root).forEach(function(x){x.setAttribute('aria-pressed',x===b)});note.textContent=speed===1?'1× speed':'Accelerated '+speed+'×';note.classList.toggle('fast',speed!==1)})});
   var cap=$('#race-cap');
   function caption(){var f=timing(fastName(),ri),f8=timing(fastName(8),ri),b=timing('ReLoopVSR-base',ri);
-    cap.textContent='At '+RL[ri]+', '+fastName()+' shows its first frame at '+f.ttffTxt+' s and runs at '+f.fpsTxt+' FPS'+(K!==8?'; with K=8 it runs at '+f8.fpsTxt+' FPS':'')+'. ReLoopVSR-base runs at '+b.fpsTxt+' FPS'+(b.flag?' with on-the-fly RAFT correlation':'')+'.'}
+    cap.textContent=RL[ri]+': '+fastName()+', first frame in '+f.ttffTxt+' s, '+f.fpsTxt+' FPS.'}
   /* the buttons ship in the HTML so the control row does not reflow when the script runs; any missing one is created */
   function segment(g,vals,labels,cur,on){var h=$('.seg[data-g='+g+']',root),pre=$$('button',h);vals.forEach(function(v,i){var b=pre[i]||el('button',{type:'button','aria-pressed':v===cur?'true':'false',text:labels[i]});
     b.addEventListener('click',function(){$$('button',h).forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false')});on(v);retime();caption();rewind();if(started&&!userPaused&&inView)start()});if(!pre[i])h.appendChild(b)})}
