@@ -100,19 +100,23 @@ function makeVideoCompare(host){
   if(c.audio){sb=el('button',{class:'play snd',type:'button','aria-pressed':'false'});
     sui=function(){var on=!video.muted;sb.innerHTML='<span>'+(on?'Sound on':'Sound off')+'</span>';sb.setAttribute('aria-pressed',on);sb.setAttribute('aria-label',(on?'Mute':'Unmute')+' this clip')};
     sb.addEventListener('click',function(){video.muted=!video.muted;if(!video.muted){players.forEach(function(o){if(o.video!==video)o.video.muted=true;if(o.sui)o.sui()});if(video.paused){userPaused=false;userPlay=true;play()}}sui()});sui()}
-  /* hero: the file (hero_freeze2.mp4, 30 fps, 1.5x zoomed crops) holds four 4.6 s clips (18.4 s loop): 2 s of playback (each 15 fps source frame shown
-     twice), then the clip's last frame held for 3.25 s. The divider is driven by the video's own clock, so it stays in step with the freeze
-     even after buffering: while the clip plays it sweeps edge to edge (3% to 97%) and back (cosine); during the freeze it snaps off the
-     right edge (whole frame = input), holds, snaps off the left edge (whole frame = ReLoopVSR), holds, and snaps back to 3% for the next
-     clip (ease-in-out quart; the homepage reel uses the same schedule). Clip k starts at output frame round(157.5k) (clips alternate
-     158/157 frames), so the clip boundaries stay within 1/60 s of the 5.25 s grid. The canvases are redrawn only when the shown source
-     frame changes, so the 3.25 s hold costs no uploads. A drag, key press or keyboard focus holds the divider; 6 s after the last touch it
-     glides back onto the schedule. Pausing the clip (off screen, hidden tab, Pause button) stops it. */
-  var CY=4.6,PLAY=2,L=-13,R=113,A=3,B=97,KF=[[0,A],[.3,R],[1.05,R],[1.4,L],[2.25,L],[2.55,A],[2.6,A]],lastId=-1;
+  /* hero: the file (hero_shots.mp4, 30 fps, 1.5x zoomed crops) holds four clips, each one continuous shot played in real time and
+     then its last frame held for 2.6 s: NYC 103 frames, portrait 36 frames each shown twice (72), Tokyo 150, rose 90 (24.23 s loop).
+     The divider is driven by the video's own clock, so it stays in step with the freeze even after buffering: while a clip plays it
+     sweeps edge to edge (3% to 97%) and back, round(play/2.5 s) times (at least once, cosine); during the freeze it snaps off the
+     right edge (whole frame = input), holds, snaps off the left edge (whole frame = ReLoopVSR), holds, and snaps back to 3% for the
+     next clip (ease-in-out quart). The canvases are redrawn only when the shown source frame changes, so the hold costs no uploads.
+     A drag, key press or keyboard focus holds the divider; 6 s after the last touch it glides back onto the schedule. Pausing the
+     clip (off screen, hidden tab, Pause button) stops it. */
+  var PF=[103,72,150,90],RP=[1,2,1,1],HF=78,L=-13,R=113,A=3,B=97,KF=[[0,A],[.3,R],[1.05,R],[1.4,L],[2.25,L],[2.55,A],[2.6,A]],lastId=-1;
+  /* output-frame start of each clip and the loop length (frames) */
+  var ST=[0],NT;for(var q=0;q<PF.length;q++)ST.push(ST[q]+PF[q]+HF);NT=ST[PF.length];
+  var clipAt=function(n){var k=0;while(k<PF.length-1&&n>=ST[k+1])k++;return k};
   var ss=function(k){k=Math.min(1,Math.max(0,k));return k<.5?8*k*k*k*k:1-Math.pow(-2*k+2,4)/2};
-  var sched=function(t){t=((t%CY)+CY)%CY-PLAY;if(t<0)return A+(B-A)*(.5-.5*Math.cos(2*Math.PI*(t+PLAY)/PLAY));for(var i=1;i<KF.length;i++){var a=KF[i-1],b=KF[i];if(t<=b[0])return a[1]===b[1]?a[1]:a[1]+(b[1]-a[1])*ss((t-a[0])/(b[0]-a[0]))}return A};
-  /* source frame shown at media time mt: clip k spans output frames [round(157.5k), round(157.5(k+1))), the first 60 of them playback */
-  var srcId=function(mt){var n=Math.round(mt*30),k=Math.max(0,Math.floor((n+.5)/157.5));while(k>0&&Math.floor(157.5*k+.5)>n)k--;while(Math.floor(157.5*(k+1)+.5)<=n)k++;return k*30+Math.min(29,Math.max(0,n-Math.floor(157.5*k+.5))>>1)};
+  var sched=function(t){var T=NT/30;t=((t%T)+T)%T;var k=clipAt(t*30),pt=PF[k]/30,sw=Math.max(1,Math.round(pt/2.5));t-=ST[k]/30;
+    if(t<pt)return A+(B-A)*(.5-.5*Math.cos(2*Math.PI*sw*t/pt));t-=pt;for(var i=1;i<KF.length;i++){var a=KF[i-1],b=KF[i];if(t<=b[0])return a[1]===b[1]?a[1]:a[1]+(b[1]-a[1])*ss((t-a[0])/(b[0]-a[0]))}return A};
+  /* source frame shown at media time mt (an id unique across clips; the hold repeats the clip's last frame) */
+  var srcId=function(mt){var n=((Math.round(mt*30)%NT)+NT)%NT,k=clipAt(n),i=Math.min(PF[k]-1,n-ST[k]);return k*1000+Math.floor(i/RP[k])};
   var sweep={sync:function(){}};
   function heroFrame(md){var mt=md?md.mediaTime:video.currentTime,id=srcId(mt);if(id!==lastId&&drawHero())lastId=id;sweep.sync()}
   if(hero){var raf=0,holdUntil=0,holding=false,glide=null,MOB=matchMedia('(max-width:800px)');
