@@ -124,15 +124,15 @@ function makeVideoCompare(host){
   if(c.audio){sb=el('button',{class:'play snd',type:'button','aria-pressed':'false'});
     sui=function(){var on=!video.muted;sb.innerHTML='<span>'+(on?T('soundOn','Sound on'):T('soundOff','Sound off'))+'</span>';sb.setAttribute('aria-pressed',on);sb.setAttribute('aria-label',on?T('muteClip','Mute this clip'):T('unmuteClip','Unmute this clip'))};
     sb.addEventListener('click',function(){video.muted=!video.muted;if(!video.muted){players.forEach(function(o){if(o.video!==video)o.video.muted=true;if(o.sui)o.sui()});if(video.paused){userPaused=false;userPlay=true;play()}}sui()});sui()}
-  /* hero: the file (hero_shots.mp4, 30 fps, 1.5x zoomed crops) holds four clips, each one continuous shot played in real time and
-     then its last frame held for 2.6 s: NYC 103 frames, Vessel staircase 111, Tokyo 150, rose 90 (25.53 s loop).
+  /* hero: the file (hero_shots.mp4, 30 fps, 1.5x zoomed crops) holds five clips, each one continuous shot played in real time and
+     then its last frame held for 2.6 s: NYC 103 frames, Vessel staircase 111, portrait 36 frames each shown twice (72), Tokyo 150, rose 90 (30.53 s loop).
      The divider is driven by the video's own clock, so it stays in step with the freeze even after buffering: while a clip plays it
      sweeps edge to edge (3% to 97%) and back, round(play/2.5 s) times (at least once, cosine); during the freeze it snaps off the
      right edge (whole frame = input), holds, snaps off the left edge (whole frame = ReLoopVSR), holds, and snaps back to 3% for the
      next clip (ease-in-out quart). The canvases are redrawn only when the shown source frame changes, so the hold costs no uploads.
      A drag, key press or keyboard focus holds the divider; 6 s after the last touch it glides back onto the schedule. Pausing the
      clip (off screen, hidden tab, Pause button) stops it. */
-  var PF=[103,111,150,90],RP=[1,1,1,1],HF=78,L=-13,R=113,A=3,B=97,KF=[[0,A],[.3,R],[1.05,R],[1.4,L],[2.25,L],[2.55,A],[2.6,A]],lastId=-1;
+  var PF=[103,111,72,150,90],RP=[1,1,2,1,1],HF=78,L=-13,R=113,A=3,B=97,KF=[[0,A],[.3,R],[1.05,R],[1.4,L],[2.25,L],[2.55,A],[2.6,A]],lastId=-1;
   /* output-frame start of each clip and the loop length (frames) */
   var ST=[0],NT;for(var q=0;q<PF.length;q++)ST.push(ST[q]+PF[q]+HF);NT=ST[PF.length];
   var clipAt=function(n){var k=0;while(k<PF.length-1&&n>=ST[k+1])k++;return k};
