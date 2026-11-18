@@ -277,3 +277,5 @@ footer .wrap{display:grid;gap:12px}
 
 /* hero: like the reference, only the slanted line shows; the round handle appears for keyboard focus */
 .hero-stage .grip:not(:focus-visible){opacity:0}
+/* hero: while the whole frame shows one side, the other side's label fades out (app.js moveHero) */
+.hero-stage .htags .tag{transition:opacity .25s ease}.hero-stage.all-in .htags .tag.r,.hero-stage.all-out .htags .tag.l{opacity:0}
