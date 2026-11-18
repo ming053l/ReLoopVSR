@@ -40,6 +40,7 @@ p{margin:0}
 .hero-top{max-width:1120px;margin:0 auto;text-align:center;display:grid;gap:12px;justify-items:center}
 h1{font-size:clamp(28px,4vw,46px);font-weight:650;line-height:1.14;letter-spacing:-.022em}h1 .nb{white-space:nowrap}h1 em{font-style:normal;color:var(--accent-ink)}
 .authors{font-size:clamp(15px,1.15vw,17px);color:var(--ink-2);margin:0}.authors a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+.affil{font-size:clamp(13px,1vw,15px);color:var(--ink-3,var(--ink-2));margin:-6px 0 0}.authors sup,.affil sup{font-size:.7em}.authors a{white-space:nowrap}.affil span{white-space:nowrap}
 .lede{font-size:clamp(16px,1.25vw,17px);color:var(--ink-2);max-width:860px;text-wrap:balance}
 .btns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
 .btn{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:8px 18px;border-radius:10px;font:inherit;font-weight:600;font-size:14.5px;text-decoration:none;border:1px solid transparent;cursor:pointer}

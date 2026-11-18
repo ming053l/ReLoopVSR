@@ -191,33 +191,6 @@ function makeTabs(host,items,onSel,label){
 var cards=$$('#showcase .card');
 makeTabs($('#show-tabs'),['All','REDS4','YouHQ40','Tears of Steel','VideoLQ'],function(i,n){cards.forEach(function(c){c.hidden=!(i===0||c.getAttribute('data-ds')===n)})},'Filter comparisons by dataset');
 
-/* multi-method crops */
-(function(){
-  var ex=D.crops,thumbs=$('#crop-thumbs'),sel=$('#crop-method'),grid=$('#crop-grid'),stage=$('#crop-stage'),under=$('#crop-under'),top=$('#crop-over'),ctx=$('#crop-ctx'),title=$('#crop-title'),tagL=$('#crop-tag'),gtwrap=$('#crop-gt');
-  var cur=ex[0],grip=gripEl('Crop split: selected method on the left, ReLoopVSR on the right');stage.appendChild(grip);
-  var slider=bindSlider(stage,grip,function(){return sel.value},null);
-  function f(e,m){return 'media/crops/'+e.id+'/'+e.files[m]+'.png'}
-  function order(e){var o=['Input','DOVE','SeedVR2','FlashVSR-Tiny','FlashVSR+','InfVSR','Stream-DiffVSR','ReLoopVSR','GT'];return o.filter(function(m){return e.files[m]})}
-  function name(e,m){return m==='Input'?'Input (bicubic)':m==='GT'?'Ground truth':m}
-  ex.forEach(function(e,i){var b=e.box,op=((b[0]+b[2]/2)/e.W*100).toFixed(0)+'% '+((b[1]+b[3]/2)/e.H*100).toFixed(0)+'%';
-    var t=el('button',{class:'thumb',type:'button','aria-pressed':i===0},[el('div',{class:'ti'},[el('img',{src:'media/crops/'+e.id+'/context.webp',alt:'',width:e.W,height:e.H,loading:'lazy',decoding:'async',style:'--op:'+op})]),el('span',{text:e.dataset+' · '+e.clip.replace('fastvr_aigc_','clip ').replace('youhq_','clip ').replace('tos_','').replace('videolq_','clip ').replace('spmcs_','').replace('vid4_','')})]);
-    t.addEventListener('click',function(){$$('.thumb',thumbs).forEach(function(x){x.setAttribute('aria-pressed',x===t)});show(e)});thumbs.appendChild(t)});
-  function setMethod(m){sel.value=m;tagL.textContent=name(cur,m);under.src=f(cur,'ReLoopVSR');top.src=f(cur,m);top.alt='Crop by '+name(cur,m)+', frame '+cur.frame+' of '+cur.clip;under.alt='Crop by ReLoopVSR, frame '+cur.frame+' of '+cur.clip;
-    $$('.mcell',grid).forEach(function(b){if(!b.disabled)b.setAttribute('aria-pressed',b.getAttribute('data-m')===m)})}
-  function show(e){cur=e;var prev=sel.value||'Stream-DiffVSR',ms=order(e);
-    sel.innerHTML='';ms.filter(function(m){return m!=='ReLoopVSR'&&m!=='GT'}).forEach(function(m){sel.appendChild(el('option',{value:m,text:name(e,m)}))});
-    title.textContent=e.dataset+', '+e.clip+', frame '+e.frame+(e.cap?'. '+e.cap:'');
-    var low=null;if(e.lpips){low=Infinity;for(var k in e.lpips)low=Math.min(low,parseFloat(e.lpips[k]))}
-    grid.innerHTML='';ms.forEach(function(m){var gt=m==='GT',ours=m==='ReLoopVSR',lp=e.lpips&&e.lpips[m];
-      var c=el('button',{class:'mcell'+(ours?' ours':''),type:'button','data-m':m},[el('img',{src:f(e,m),alt:name(e,m)+' crop',loading:'lazy'}),el('span',{},[document.createTextNode(name(e,m)),lp?el('em',{class:parseFloat(lp)===low?'low':'',text:'LPIPS '+lp}):null])]);
-      if(gt||ours)c.disabled=true;else c.addEventListener('click',function(){setMethod(m)});grid.appendChild(c)});
-    var ci=$('img',ctx),b=e.box,rect=$('i',ctx);ci.setAttribute('width',e.W);ci.setAttribute('height',e.H);ci.src='media/crops/'+e.id+'/context.webp';ci.alt='Full frame of '+e.clip+' with the crop region marked';
-    rect.style.cssText='left:'+(b[0]/e.W*100)+'%;top:'+(b[1]/e.H*100)+'%;width:'+(b[2]/e.W*100)+'%;height:'+(b[3]/e.H*100)+'%';
-    gtwrap.textContent=e.gt?'Full frame: ground truth, with the crop marked.':'Full frame: ReLoopVSR, with the crop marked. VideoLQ has no ground truth, so no fidelity is claimed and details may be plausible rather than true.';
-    setMethod(e.files[prev]&&prev!=='GT'&&prev!=='ReLoopVSR'?prev:'Stream-DiffVSR')}
-  sel.addEventListener('change',function(){setMethod(sel.value)});
-  show(ex[0]);
-})();
 
 /* Table 1 bars */
 (function(){

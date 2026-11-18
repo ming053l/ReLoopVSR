@@ -32,7 +32,8 @@
 <div class="hero" id="top"><div class="wrap">
   <div class="hero-top">
     <h1><em>ReLoopVSR</em>: <span class="nb">One-Step</span> Recurrent Autoregressive Diffusion Refinement for Streaming Video Super-Resolution</h1>
-    <p class="authors"><a href="https://ming053l.github.io/" target="_blank" rel="noopener">Chia-Ming Lee</a>, <a href="https://mingching.github.io/" target="_blank" rel="noopener">Ming-Ching Chang</a>, <a href="https://scholar.google.com/citations?user=gMBvzGoAAAAJ&amp;hl=en" target="_blank" rel="noopener">Xin Li</a>, <a href="https://yulunalexliu.github.io/" target="_blank" rel="noopener">Yu-Lun Liu</a>, <a href="https://cchsu.info/" target="_blank" rel="noopener">Chih-Chung Hsu</a></p>
+    <p class="authors"><a href="https://ming053l.github.io/" target="_blank" rel="noopener">Chia-Ming Lee</a><sup>1,2</sup>, <a href="https://mingching.github.io/" target="_blank" rel="noopener">Ming-Ching Chang</a><sup>1</sup>, <a href="https://scholar.google.com/citations?user=gMBvzGoAAAAJ&amp;hl=en" target="_blank" rel="noopener">Xin Li</a><sup>1</sup>, <a href="https://yulunalexliu.github.io/" target="_blank" rel="noopener">Yu-Lun Liu</a><sup>2</sup>, <a href="https://cchsu.info/" target="_blank" rel="noopener">Chih-Chung Hsu</a><sup>2</sup></p>
+    <p class="affil"><span><sup>1</sup>University at Albany, SUNY</span>&nbsp;&nbsp;&nbsp; <span><sup>2</sup>National Yang Ming Chiao Tung University</span></p>
     <p class="lede">ReLoopVSR restores a video stream without future frames, in one denoising step per frame. It aligns and re-noises the previous restoration, refines it with the current low-resolution frame, and restarts wherever errors are predicted or the scene cuts. It leads in perceptual quality with far lower memory and latency, and ReLoopVSR-fast exceeds 240 FPS at 720p.</p>
     <div class="btns">
       <a class="btn btn-p" href="#results">See the results</a>
@@ -91,24 +92,6 @@
     <article class="card" data-ds="Tears of Steel"><div class="cmp" data-clip="tos_room1" data-desc="Shot from the film Tears of Steel, a soldier behind a balustrade" data-cap="<b>Tears of Steel, room excerpt</b>. 1280×720, first 144 frames at 24 fps, with cuts at frames 60 and 124."></div></article>
     <article class="card" data-ds="VideoLQ"><div class="cmp" data-clip="vlq_013" data-desc="Street with shop signs and brick buildings, real-world VideoLQ clip 013" data-cap="<b>VideoLQ clip 013</b>, real-world fine-tuned checkpoint. 2560×1440 output, scaled to 1920×1080 here. VideoLQ has no ground truth, so details may be plausible rather than true."></div></article>
     <article class="card" data-ds="VideoLQ"><div class="cmp" data-clip="vlq_005" data-desc="Wrought-iron street lamp in front of painted buildings, real-world VideoLQ clip 005" data-cap="<b>VideoLQ clip 005</b>, real-world fine-tuned checkpoint. 1280×960, 100 frames at 24 fps. VideoLQ has no ground truth, so details may be plausible rather than true."></div></article>
-  </div>
-
-  <div class="sub"><p class="eyebrow">Method by method</p><h3>Same crop, every method</h3>
-  <p class="note">Native-resolution crops of single frames, enlarged by the browser. Baselines use official settings; outputs are unprocessed apart from bicubic resizing when a size differs from ground truth. LPIPS is measured on the crop, lower is better.</p></div>
-  <div id="crop-thumbs" class="thumbs" role="group" aria-label="Choose an example"></div>
-  <div class="crop-layout">
-    <div class="cmp">
-      <div class="stage" id="crop-stage" style="--ar:1;width:min(100%,560px);">
-        <img id="crop-under" alt="" loading="lazy" decoding="async"><img id="crop-over" class="top" alt="" loading="lazy" decoding="async">
-        <span class="tag l" id="crop-tag">Method</span><span class="tag r">ReLoopVSR</span><div class="split"></div>
-      </div>
-      <div class="bar-ctl"><label class="field"><span>Compare ReLoopVSR with</span><select id="crop-method"></select></label></div>
-      <p class="cap" id="crop-title" style="margin-top:8px"></p>
-    </div>
-    <div class="crop-side">
-      <div class="mgrid" id="crop-grid"></div>
-      <div><div class="ctx" id="crop-ctx"><img alt="" loading="lazy" decoding="async"><i></i></div><p class="note" id="crop-gt" style="margin-top:7px"></p></div>
-    </div>
   </div>
 </div></section>
 
@@ -242,7 +225,7 @@
   <details><summary>Is it real-time?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>ReLoopVSR-fast exceeds 240 FPS at 720p and 28 FPS at 4K in half precision on one RTX PRO 6000 Blackwell. ReLoopVSR-base runs at 17.4 FPS at 720p in FP16 and at 3.58 FPS in strict FP32. Both are streaming in the causal sense, because each output is available without waiting for future frames.</p></div></details>
   <details><summary>How does it perform on real-world video?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>With a checkpoint fine-tuned on compressed DOVE degradations, ReLoopVSR leads in MUSIQ, CLIP-IQA, MANIQA and BRISQUE on VideoLQ but trails four baselines in DOVER. VideoLQ has no ground truth, so these are no-reference scores and fidelity remains unmeasured.</p></div></details>
   <details><summary>What are the limits?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>The evaluation covers only fixed ×4 restoration. The first frame and the frames right after a cut have no recurrent state, although quality recovers within a few frames. Fine periodic or aliased structures can be smoothed or replaced by a wrong pattern.</p><p>On SPMCS, DOVE leads several metrics and ReLoopVSR does not lead tLP.</p></div></details>
-  <details><summary>Are the examples on this page representative?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>The clips were chosen to be easy to read, and the method-by-method crops were hand-picked to favour ReLoopVSR, so the benchmark tables are the appropriate reference for performance. Each clip is at the resolution stated in its caption.</p></div></details>
+  <details><summary>Are the examples on this page representative?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>The clips were chosen to be easy to read, so the benchmark tables are the appropriate reference for performance. Each clip is at the resolution stated in its caption.</p></div></details>
   <details><summary>How much GPU memory does it need? Does it run out of memory on long videos?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>At 720p, peak allocation is 4.92 GiB for ReLoopVSR in strict FP32, 4.4 GiB for ReLoopVSR-base in FP16, and 2.2 GiB for ReLoopVSR-fast. In half precision, ReLoopVSR restores 4K video with 11.6 GiB of peak memory. The state has a fixed size and frames are processed one at a time, so memory stays constant with stream length.</p></div></details>
   <details><summary>Which scale factors are supported?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>The evaluated model restores ×4 only, and other scale factors remain unevaluated.</p></div></details>
   <details><summary>Why might results look close to bicubic on my own video?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div><p>The default model is trained for bicubic ×4 inputs. Compressed or otherwise degraded video needs the real-world fine-tuned checkpoint, which is the version used for VideoLQ in the table above. Even then, gains depend on content and metric. Check also that the input is the low-resolution source rather than an already upscaled video.</p></div></details>
