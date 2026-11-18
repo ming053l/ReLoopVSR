@@ -97,26 +97,26 @@ function makeVideoCompare(host){
   if(c.audio){sb=el('button',{class:'play snd',type:'button','aria-pressed':'false'});
     sui=function(){var on=!video.muted;sb.innerHTML='<span>'+(on?'Sound on':'Sound off')+'</span>';sb.setAttribute('aria-pressed',on);sb.setAttribute('aria-label',(on?'Mute':'Unmute')+' this clip')};
     sb.addEventListener('click',function(){video.muted=!video.muted;if(!video.muted){players.forEach(function(o){if(o.video!==video)o.video.muted=true;if(o.sui)o.sui()});if(video.paused){userPaused=false;userPlay=true;play()}}sui()});sui()}
-  /* hero: while the clip plays, the divider holds 1.6 s at 18%, slides 1.4 s (ease-in-out) to 82%, holds 1.6 s and slides back (6 s cycle),
+  /* hero: while the clip plays, the divider sits off the left edge (all ReLoopVSR) for 1.2 s, snaps to half/half, then off the right edge (all input), and snaps back (4 s cycle, ease-in-out quart),
      as Web Animations on the transforms, which the compositor runs without main-thread work; pausing the clip (off screen, hidden tab,
      Pause button) stops it. A drag, key press or keyboard focus holds the divider; 6 s after the last touch it glides to the nearer end
      and the cycle continues from that hold. */
   var sweep={start:function(){},stop:function(){}};
-  if(hero&&stage.animate){var T=6000,L=18,R=82,EZ='cubic-bezier(.3333,0,.6667,1)',anims=null,holdUntil=0,timer=0;
-    /* cubic-bezier(1/3,0,2/3,1) is exactly smoothstep, so at() below matches what the compositor draws */
-    var ss=function(k){k=Math.min(1,Math.max(0,k));return k*k*(3-2*k)};
-    var at=function(t){t=((t%T)+T)%T;if(t<1600)return L;if(t<3000)return L+(R-L)*ss((t-1600)/1400);if(t<4600)return R;return R+(L-R)*ss((t-4600)/1400)};
+  if(hero&&stage.animate){var T=4000,L=-13,R=113,M=66,EZ='cubic-bezier(.76,0,.24,1)',KS=[[0,L],[1200,L],[1550,M],[2150,M],[2500,R],[3200,R],[3650,L],[4000,L]],anims=null,holdUntil=0,timer=0;
+    /* ss() is ease-in-out cubic, which cubic-bezier(.65,0,.35,1) approximates closely */
+    var ss=function(k){k=Math.min(1,Math.max(0,k));return k<.5?8*k*k*k*k:1-Math.pow(-2*k+2,4)/2};
+    var at=function(t){t=((t%T)+T)%T;for(var i=1;i<KS.length;i++){var a=KS[i-1],b=KS[i];if(t<=b[0])return a[1]===b[1]?a[1]:a[1]+(b[1]-a[1])*ss((t-a[0])/(b[0]-a[0]))}return L};
     var kf=function(stops){return movers.map(function(m,i){return stops.map(function(x){var o={transform:heroTf(x[1])[i],offset:x[0]};if(x[2])o.easing=x[2];return o})})};
-    var CYC=kf([[0,L],[1600/T,L,EZ],[3000/T,R],[4600/T,R,EZ],[1,L]]);
+    var CYC=kf(KS.map(function(k,i){var n=KS[i+1],o=[k[0]/T,k[1]];if(n&&n[1]!==k[1])o.push(EZ);return o}));
     var run=function(keys,o){return movers.map(function(m,i){return m.animate(keys[i],o)})};
     var stop=function(sync){if(!anims)return;var t=anims[0].currentTime||0,p=anims.loop?at(t):anims.from+(anims.to-anims.from)*ss(t/anims.d);
       anims.forEach(function(x){x.cancel()});anims=null;if(sync)slider.quiet(p)};
     var loop=function(t0){anims=run(CYC,{duration:T,iterations:Infinity});anims.forEach(function(x){x.currentTime=t0});anims.loop=true};
     var start=function(){if(anims||REDUCED.matches||matchMedia('(max-width:800px)').matches||video.paused||performance.now()<holdUntil||document.activeElement===grip)return;
-      var p=slider.get(),to=p>=50?R:L,t0=to===L?0:3000;
+      var p=slider.get(),to=p>=50?R:L,t0=to===L?0:2500;
       if(Math.abs(p-to)<.3){loop(t0);return}
       /* away from the hold position: glide there first at about the slide's pace, then continue the cycle from that hold */
-      var d=Math.max(450,Math.abs(p-to)*22);
+      var d=Math.max(300,Math.abs(p-to)*8);
       anims=run(kf([[0,p,EZ],[1,to]]),{duration:d,fill:'forwards'});anims.from=p;anims.to=to;anims.d=d;
       var mine=anims;anims[0].onfinish=function(){if(anims!==mine)return;mine.forEach(function(x){x.cancel()});anims=null;slider.quiet(to);loop(t0)}};
     var later=function(){clearTimeout(timer);timer=setTimeout(start,Math.max(0,holdUntil-performance.now())+20)};
