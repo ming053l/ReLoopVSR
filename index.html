@@ -8,7 +8,7 @@
 <meta name="robots" content="noindex">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237CB696'/%3E%3Cpath d='M23 11a9 9 0 1 0 1.6 7' fill='none' stroke='%2327323c' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='m25 6-1 6.6-6.4-1.6' fill='none' stroke='%2327323c' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script>try{var t=localStorage.getItem('dv-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
-<link rel="stylesheet" href="assets/style.css?v=20261117">
+<link rel="stylesheet" href="assets/style.css?v=20261118">
 <link rel="stylesheet" href="assets/schematic.css?v=20261110c">
 <style>#race-chips{grid-column:1/-1;grid-template-columns:repeat(5,minmax(0,1fr));margin-top:0}@media (max-width:760px){#race-chips{grid-template-columns:repeat(2,minmax(0,1fr))}}.rp.oom .rv{opacity:.55}.race-ctl .seg+.seg{margin-left:4px}.note.illus{font-size:12px;text-align:center;margin:6px auto 10px;max-width:none}#race-cap{margin-top:4px;font-size:13px;color:var(--ink-2)}.seg[data-g=res] button,.seg[data-g=k] button{width:auto;min-width:44px;padding:0 9px}</style>
 </head>
@@ -45,8 +45,8 @@
       <h2 id="race-h" class="race-title">Same 100 frames, shared clock, 720p to 4K</h2>
       <div class="clock"><span class="vh">Elapsed measured time: </span><b id="race-clock">0.0 s</b><span id="race-speed-note" class="pill">1× speed</span></div>
       <div class="race-ctl">
-        <div class="seg" data-g="res" role="group" aria-label="Output resolution used for the timing"></div>
-        <div class="seg" data-g="k" role="group" aria-label="Keyframe interval of ReLoopVSR-fast"></div>
+        <div class="seg" data-g="res" role="group" aria-label="Output resolution used for the timing"><button type="button" aria-pressed="true">720p</button><button type="button" aria-pressed="false">1080p</button><button type="button" aria-pressed="false">1440p</button><button type="button" aria-pressed="false">4K</button></div>
+        <div class="seg" data-g="k" role="group" aria-label="Keyframe interval of ReLoopVSR-fast"><button type="button" aria-pressed="false">K=4</button><button type="button" aria-pressed="false">K=8</button><button type="button" aria-pressed="false">K=12</button><button type="button" aria-pressed="false">K=16</button><button type="button" aria-pressed="true">K=20</button></div>
         <div class="seg" data-g="speed" role="group" aria-label="Playback speed of the race"><button type="button" data-s="1" aria-pressed="true">1×</button><button type="button" data-s="4" aria-pressed="false">4×</button><button type="button" data-s="16" aria-pressed="false">16×</button></div>
         <button class="play" id="race-pause" type="button">Pause</button><button class="play" id="race-replay" type="button">Replay</button>
       </div>
@@ -87,8 +87,6 @@
     <article class="card" data-ds="REDS4"><div class="cmp" data-clip="reds_020" data-desc="Street stall with paintings and passers-by, REDS4 clip 020" data-cap="<b>REDS4 clip 020</b>. 1280×720, 100 frames at 24 fps."></div></article>
     <article class="card" data-ds="YouHQ40"><div class="cmp" data-clip="youhq_018" data-desc="Hotel facade with striped awnings along a road, YouHQ40 clip 018" data-cap="<b>YouHQ40 clip 018</b>. 1920×1080, all 33 frames, shown at 12 fps."></div></article>
     <article class="card" data-ds="YouHQ40"><div class="cmp" data-clip="youhq_019" data-desc="Aerial city view with high-rise buildings, YouHQ40 clip 019" data-cap="<b>YouHQ40 clip 019</b>. 1920×1080, all 33 frames, shown at 12 fps. Contains the set's one scene cut, at frame 17."></div></article>
-    <article class="card" data-ds="LongAIGC-8"><div class="cmp" data-clip="aigc_004" data-desc="Generated portrait-format drama shot of two people at a dinner table, AIGC clip 004" data-cap="<b>LongAIGC-8 clip 004</b>. 1080×1920, first 100 frames at 24 fps, with cuts at frames 27 and 59."></div></article>
-    <article class="card" data-ds="LongAIGC-8"><div class="cmp" data-clip="aigc_001" data-desc="Generated portrait-format drama shot of two people in a formal room, AIGC clip 001" data-cap="<b>LongAIGC-8 clip 001</b>. 1080×1920, first 100 frames at 24 fps, with cuts at frames 34 and 53."></div></article>
     <article class="card" data-ds="Tears of Steel"><div class="cmp" data-clip="tos_dialog" data-desc="Shot from the film Tears of Steel, a man aiming a mechanical device" data-cap="<b>Tears of Steel, dialog excerpt</b>. 1280×720, frames 41–164 at 24 fps, with a cut at frame 85."></div></article>
     <article class="card" data-ds="Tears of Steel"><div class="cmp" data-clip="tos_room1" data-desc="Shot from the film Tears of Steel, a soldier behind a balustrade" data-cap="<b>Tears of Steel, room excerpt</b>. 1280×720, first 144 frames at 24 fps, with cuts at frames 60 and 124."></div></article>
     <article class="card" data-ds="VideoLQ"><div class="cmp" data-clip="vlq_013" data-desc="Street with shop signs and brick buildings, real-world VideoLQ clip 013" data-cap="<b>VideoLQ clip 013</b>, real-world fine-tuned checkpoint. 2560×1440 output, scaled to 1920×1080 here. VideoLQ has no ground truth, so details may be plausible rather than true."></div></article>
@@ -112,9 +110,6 @@
       <div><div class="ctx" id="crop-ctx"><img alt="" loading="lazy" decoding="async"><i></i></div><p class="note" id="crop-gt" style="margin-top:7px"></p></div>
     </div>
   </div>
-  <figure class="fig-wrap" style="margin-top:32px"><div class="fig"><a href="assets/fig/qualitative_videolq.webp?v=20261117f"><img src="assets/fig/qualitative_videolq.webp?v=20261117f" width="2400" height="2005" loading="lazy" decoding="async" alt="Three real-world VideoLQ clips, 013, 018 and 005, each with a full frame and crops of a shop sign, a TCL rooftop sign and a wrought-iron lamp from the bicubic input, DOVE, STAR, PS-SR, FlashVSR-Tiny, FlashVSR+, InfVSR, Stream-DiffVSR and ReLoopVSR."></a></div>
-    <figcaption><b>Qualitative comparison on real-world VideoLQ</b> (supplement; no ground truth, ReLoopVSR fine-tuned). SeedVR2 is omitted because these output sizes exceed GPU memory.</figcaption></figure>
-  <p class="callout" style="margin-top:26px"><b>Illustrative only:</b> restored with an earlier checkpoint and not part of the paper's evaluation. These crops were hand-picked after visual inspection and deliberately favour ReLoopVSR. They show the kind of difference that can occur and are not a performance estimate; the <a href="#benchmarks">benchmark tables</a> are.</p>
 </div></section>
 
 <section id="method" class="alt"><div class="wrap">
@@ -194,14 +189,6 @@
       <tr><th scope="col">FPS ↑</th><th scope="col">TTFF ↓</th><th scope="col">GiB ↓</th><th scope="col">FPS ↑</th><th scope="col">TTFF ↓</th><th scope="col">GiB ↓</th><th scope="col">FPS ↑</th><th scope="col">TTFF ↓</th><th scope="col">GiB ↓</th><th scope="col">FPS ↑</th><th scope="col">TTFF ↓</th><th scope="col">GiB ↓</th></tr></thead>
       <tbody></tbody></table></div>
       <p class="note" style="margin-top:8px">TTFF in s. † Extrapolated from a shorter run. § Official half precision is BF16 only. ‡ On-the-fly RAFT correlation. OOM: exceeds 96 GiB. The rows below the divider are the accelerated methods of Table 3.</p>
-    </div>
-    <div class="panel">
-      <h3 style="margin-bottom:6px">Where the savings come from</h3>
-      <p class="note" style="margin-bottom:16px">Cumulative changes to Stream-DiffVSR at 720p in FP32. The optimized per-frame pipeline removes most of the TTFF and memory, two denoising steps from prior restorations halve the per-frame time, and one-step distillation nearly halves it again at similar PSNR and DISTS. Temporal fine-tuning then lowers tLP on REDS4 from 0.682 to 0.301, and the ×4-input flow adds only 0.03× of the Stream-DiffVSR time for the best score on every quality metric.</p>
-      <div class="ladder" id="ladder" role="table" aria-label="Cost ladder from Stream-DiffVSR to ReLoopVSR">
-        <div class="h h0" role="columnheader">Cumulative change</div><div class="h" role="columnheader">Relative time</div><div class="h" role="columnheader">TTFF (s), log</div><div class="h" role="columnheader">Peak (GiB), log</div>
-      </div>
-      <p class="note" style="margin-top:14px">Relative time is against Stream-DiffVSR in the same measurement.</p>
     </div>
   </div>
 </div></section>
@@ -286,8 +273,8 @@
   <p>Test material: REDS4, YouHQ40, the LongAIGC-8 videos and VideoLQ, as used in the paper, shown for research comparison. <i>Tears of Steel</i> (CC) Blender Foundation.</p>
   <p>Numbers come from the paper's tables. This page loads no external resources and collects no data. Fonts: Inter and JetBrains Mono, SIL Open Font License (see assets/fonts).</p>
 </div></footer>
-<script src="assets/data.js?v=20261117f" defer></script>
-<script src="assets/schematic.js?v=20261117" defer></script>
-<script src="assets/app.js?v=20261117f" defer></script>
+<script src="assets/data.js?v=20261118" defer></script>
+<script src="assets/schematic.js?v=20261118" defer></script>
+<script src="assets/app.js?v=20261118" defer></script>
 </body>
 </html>

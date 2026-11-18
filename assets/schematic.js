@@ -377,8 +377,10 @@ else{
     var io=new IntersectionObserver(check,{threshold:[0,.2,.4,.6,.8,1]});
     lanes.forEach(function(L){io.observe(L.art)});
   }else{lanes.forEach(finish)}
-  window.addEventListener('resize',check,{passive:true});
-  window.addEventListener('scroll',check,{passive:true});
+  /* scroll and resize only re-check once per frame, and only while a lane is still waiting to play */
+  var pend=false;function soon(){if(pend||!lanes.some(function(L){return L.armed}))return;pend=true;requestAnimationFrame(function(){pend=false;check()})}
+  window.addEventListener('resize',soon,{passive:true});
+  window.addEventListener('scroll',soon,{passive:true});
   check();
 }
 if(reduced.addEventListener)reduced.addEventListener('change',function(){
