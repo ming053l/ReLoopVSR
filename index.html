@@ -32,7 +32,8 @@
 <div class="hero" id="top"><div class="wrap">
   <div class="hero-top">
     <h1><em>ReLoopVSR</em>: <span class="nb">One-Step</span> Recurrent Autoregressive Diffusion Refinement for Streaming Video Super-Resolution</h1>
-    <p class="lede">Streaming video super-resolution (VSR) inherently demands high-quality reconstruction without future frames and within a bounded per-frame budget. However, existing diffusion-based streaming VSR methods buffer future frames into chunks, accumulate errors over long streams, and need dedicated acceleration for their large backbones even with one-step sampling. We propose ReLoopVSR, a compact recurrent autoregressive diffusion framework that extends refinement across frames through a shared one-step denoiser. The model aligns and re-noises the previous denoised latent to initialize the current update, then refines it using the current low-resolution observation. Repeated updates to temporally corresponding content form a spatiotemporal momentum that extends effective computational depth with fixed parameters and one denoising step per frame. Lightweight temporal modules reduce conditioning and decoding costs. Since local inconsistencies and scene cuts cause error spiking, local and global reliability control stops this momentum where errors are predicted, while rollout training and perceptual temporal supervision adapt the model to correct inherited errors. Building on this compact backbone, ReLoopVSR-fast exploits temporal redundancy by running the denoiser only on keyframes and restoring other frames with a lightweight fast decoder. ReLoopVSR achieves leading perceptual quality on six paired benchmarks with far lower peak memory and first-frame latency than existing streaming VSR methods, and the fast variant exceeds 240 FPS at 720p and 28 FPS at 4K, well above existing methods, with only 2.2 GiB of peak memory at 720p.</p>
+    <p class="authors"><a href="https://ming053l.github.io/" target="_blank" rel="noopener">Chia-Ming Lee</a>, <a href="https://mingching.github.io/" target="_blank" rel="noopener">Ming-Ching Chang</a>, <a href="https://scholar.google.com/citations?user=gMBvzGoAAAAJ&amp;hl=en" target="_blank" rel="noopener">Xin Li</a>, <a href="https://yulunalexliu.github.io/" target="_blank" rel="noopener">Yu-Lun Liu</a>, <a href="https://cchsu.info/" target="_blank" rel="noopener">Chih-Chung Hsu</a></p>
+    <p class="lede">ReLoopVSR restores a video stream without future frames, in one denoising step per frame. It aligns and re-noises the previous restoration, refines it with the current low-resolution frame, and restarts wherever errors are predicted or the scene cuts. It leads in perceptual quality with far lower memory and latency, and ReLoopVSR-fast exceeds 240 FPS at 720p.</p>
     <div class="btns">
       <a class="btn btn-p" href="#results">See the results</a>
       <a class="btn btn-s" href="#benchmarks">See the numbers</a>
@@ -263,13 +264,13 @@
 </div></section>
 
 <section id="citation"><div class="wrap">
-  <div class="head"><p class="eyebrow">Citation</p><h2>Cite this work</h2><p>Authors and venue will be added later.</p></div>
+  <div class="head"><p class="eyebrow">Citation</p><h2>Cite this work</h2><p>Venue and links will be added later.</p></div>
   <div class="bib"><pre id="bibtex" tabindex="0">@misc{reloopvsr,
   title  = {ReLoopVSR: One-Step Recurrent Autoregressive Diffusion
             Refinement for Streaming Video Super-Resolution},
-  author = {TODO: authors withheld during review},
-  year   = {TODO},
-  note   = {TODO: venue and link}
+  author = {Lee, Chia-Ming and Chang, Ming-Ching and Li, Xin and Liu, Yu-Lun and Hsu, Chih-Chung},
+  year   = {2026},
+  note   = {Preprint}
 }</pre><button class="btn btn-s copy" id="copy" type="button">Copy</button></div>
   <p class="vh" id="copy-status" aria-live="polite"></p>
   <div class="links-soon">
@@ -282,7 +283,7 @@
 </main>
 <footer><div class="wrap">
   <span class="brand" style="font-size:1rem">ReLoop<b style="color:var(--accent-ink)">VSR</b></span>
-  <p>Paper under anonymous review. Test material: REDS4, YouHQ40, the LongAIGC-8 videos and VideoLQ, as used in the paper, shown for research comparison. <i>Tears of Steel</i> (CC) Blender Foundation.</p>
+  <p>Test material: REDS4, YouHQ40, the LongAIGC-8 videos and VideoLQ, as used in the paper, shown for research comparison. <i>Tears of Steel</i> (CC) Blender Foundation.</p>
   <p>Numbers come from the paper's tables. This page loads no external resources and collects no data. Fonts: Inter and JetBrains Mono, SIL Open Font License (see assets/fonts).</p>
 </div></footer>
 <script src="assets/data.js?v=20261117f" defer></script>
