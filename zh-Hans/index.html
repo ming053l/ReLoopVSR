@@ -27,7 +27,7 @@
 <!--/i18n-head-->
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237CB696'/%3E%3Cpath d='M23 11a9 9 0 1 0 1.6 7' fill='none' stroke='%2327323c' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='m25 6-1 6.6-6.4-1.6' fill='none' stroke='%2327323c' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script>try{var t=localStorage.getItem('dv-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
-<link rel="stylesheet" href="../assets/style.css?v=20261119d">
+<link rel="stylesheet" href="../assets/style.css?v=20261119f">
 <link rel="stylesheet" href="../assets/schematic.css?v=20261110c">
 <style>#race-chips{grid-column:1/-1;grid-template-columns:repeat(5,minmax(0,1fr));margin-top:0}@media (max-width:760px){#race-chips{grid-template-columns:repeat(2,minmax(0,1fr))}}.rp.oom .rv{opacity:.55}.race-ctl .seg+.seg{margin-left:4px}.note.illus{font-size:12px;text-align:center;margin:6px auto 10px;max-width:none}#race-cap{margin-top:4px;font-size:13px;color:var(--ink-2)}.seg[data-g=res] button,.seg[data-g=k] button{width:auto;min-width:44px;padding:0 9px}</style>
 </head>
@@ -132,9 +132,10 @@
     <figure class="fig-wrap"><div class="fig"><a href="../assets/fig/recurrent_refinement_schematic.webp?v=20261117f"><img src="../assets/fig/recurrent_refinement_schematic.webp?v=20261117f" width="1600" height="943" loading="lazy" decoding="async" alt="上：一条带有两处场景切换的胶片带，ReLoopVSR 使用上次切换以来的当前帧与过去帧，而基于分块的 DiT 会跨越切换缓存 n 个未来帧。下：ReLoopVSR 用 LR 光流变换上一帧输出，对对齐结果重加噪，结合当前 LR 帧以一个蒸馏步完成精修，并将新输出作为循环精修反馈回去。"></a></div>
     <figcaption><b>流式输入与循环精修</b>（论文图 2）。基于分块的 DiT 方法会缓存 <i>n</i> 个未来帧，这既增加了延迟，又会在切换处混入无关内容；ReLoopVSR 只使用上次切换以来的当前帧与过去帧，通过循环精修以自回归方式积累时空动量。</figcaption></figure></div>
 
+  <div class="den-head"><span class="num">02</span><h3>局部与全局可靠性控制</h3></div>
   <figure class="fig-wrap den-vid"><div class="fig"><video class="autovid" muted loop playsinline preload="none" width="1600" height="666" poster="../media/poster/den_web.webp" data-src="../media/video/den_web.mp4" data-src-lite="media/video/den_web-lite.mp4" aria-label="DEN 可视化：ReLoopVSR 输出叠加 DEN 预测的误差，重新开始的图块以青色框标出，场景切换以红色标示；右侧为输入与 ReLoopVSR 输出。"></video></div>
     <figcaption><b>可靠性控制实际运行。</b>热度图：DEN 预测的误差；青色框：从当前帧重新开始的图块；红色外框：场景切换重置。下方长条显示每帧重新开始的图块比例。</figcaption></figure>
-  <div class="feature"><div class="ft"><span class="num">02</span><h3>局部与全局可靠性控制</h3>
+  <div class="feature after-vid"><div class="ft">
     <p>在内容一致的场景中，传播的复原结果能增强紧凑模型的能力；但局部不一致（如移动的人物）与全局不一致（如光照变化和场景切换）在被传播时会引发误差尖峰。因此，一个轻量的动态估计网络（Dynamic Estimation Network，DEN）根据当前 LR 输入、变换后的上一帧 LR 输入和对齐后的潜变量，预测对齐潜变量的复原误差。</p>
     <ul><li>在局部，预测误差较低的图块保留对齐后的复原结果，其余图块则从编码后的双三次上采样观测重新开始。两种来源共用同一个去噪步，因此重新开始不会增加去噪器的调用次数。</li><li>在全局，当不可靠的图块覆盖至少一半画面且检测到全局 LR 外观变化时，整个状态将被重置。重置还会清除时间条件和光流热启动，并且不需要任何未来帧。</li><li>禁用可靠性控制后，29 个切换事件处的 LPIPS 从 0.0820 上升到 0.1088，因此收益来自完整重置。</li></ul></div>
     <figure class="fig-wrap"><div class="fig"><a href="../assets/fig/den_motivation.webp?v=20261117f"><img src="../assets/fig/den_motivation.webp?v=20261117f" width="1600" height="679" loading="lazy" decoding="async" alt="可靠性控制示意图：在局部，可靠的图块保留对齐后的复原结果，不可靠的图块从当前 LR 观测重新开始；在全局，场景切换会重置状态并清除时间条件。"></a></div>

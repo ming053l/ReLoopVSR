@@ -309,3 +309,5 @@ html:lang(ko) body,html:lang(ko) .sch-svg{font-family:"Inter","Inter fallback","
 html:lang(ko) body{word-break:keep-all;overflow-wrap:break-word}
 :is(html:lang(zh),html:lang(ja),html:lang(ko)) :is(.head p,.lede,.fig-wrap figcaption,.feature li,.faq p){line-height:1.75}
 .fig-wrap.den-vid{max-width:1080px;margin:8px auto 4px}.fig-wrap.den-vid video{display:block;width:100%;height:auto;border-radius:10px;background:#101418}.fig-wrap.den-vid figcaption{max-width:none}
+.den-head{border-top:1px solid var(--line);padding-top:44px}.den-head h3{margin-top:6px}.fig-wrap.den-vid{margin-top:14px}.feature.after-vid{border-top:0;padding-top:20px}
+@media (max-width:900px){.den-head{padding-top:32px}.feature.after-vid{padding-top:12px}}

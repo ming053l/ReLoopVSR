@@ -27,7 +27,7 @@
 <!--/i18n-head-->
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237CB696'/%3E%3Cpath d='M23 11a9 9 0 1 0 1.6 7' fill='none' stroke='%2327323c' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='m25 6-1 6.6-6.4-1.6' fill='none' stroke='%2327323c' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script>try{var t=localStorage.getItem('dv-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
-<link rel="stylesheet" href="../assets/style.css?v=20261119d">
+<link rel="stylesheet" href="../assets/style.css?v=20261119f">
 <link rel="stylesheet" href="../assets/schematic.css?v=20261110c">
 <style>#race-chips{grid-column:1/-1;grid-template-columns:repeat(5,minmax(0,1fr));margin-top:0}@media (max-width:760px){#race-chips{grid-template-columns:repeat(2,minmax(0,1fr))}}.rp.oom .rv{opacity:.55}.race-ctl .seg+.seg{margin-left:4px}.note.illus{font-size:12px;text-align:center;margin:6px auto 10px;max-width:none}#race-cap{margin-top:4px;font-size:13px;color:var(--ink-2)}.seg[data-g=res] button,.seg[data-g=k] button{width:auto;min-width:44px;padding:0 9px}</style>
 </head>
@@ -132,9 +132,10 @@
     <figure class="fig-wrap"><div class="fig"><a href="../assets/fig/recurrent_refinement_schematic.webp?v=20261117f"><img src="../assets/fig/recurrent_refinement_schematic.webp?v=20261117f" width="1600" height="943" loading="lazy" decoding="async" alt="上：2つのシーンカットを含むフィルムストリップ。ReLoopVSR は直近のカット以降の現在と過去のフレームを用いる一方、チャンク型 DiT はカットをまたいで n 枚の未来フレームをバッファする。下：ReLoopVSR は LR フローで直前の出力をワープし、位置合わせした結果を再ノイズ付加し、現在の LR フレームを用いて蒸留済みの1ステップでリファインし、新しい出力を再帰的リファインメントとしてフィードバックする。"></a></div>
     <figcaption><b>ストリーミング入力と再帰的リファインメント</b>（論文の図2）。チャンク型 DiT 手法は <i>n</i> 枚の未来フレームをバッファするため、レイテンシが増え、カットをまたいで無関係な内容が混ざる。ReLoopVSR は直近のカット以降の現在と過去のフレームのみを用い、再帰的リファインメントにより自己回帰的に時空間モメンタムを構築する。</figcaption></figure></div>
 
+  <div class="den-head"><span class="num">02</span><h3>局所・大域の信頼性制御</h3></div>
   <figure class="fig-wrap den-vid"><div class="fig"><video class="autovid" muted loop playsinline preload="none" width="1600" height="666" poster="../media/poster/den_web.webp" data-src="../media/video/den_web.mp4" data-src-lite="media/video/den_web-lite.mp4" aria-label="DEN の可視化：ReLoopVSR の出力に DEN が予測した誤差を重ね、再開したタイルをシアンの枠で、シーンカットを赤で示しています。右側は入力と ReLoopVSR の出力です。"></video></div>
     <figcaption><b>信頼性制御の動作。</b>ヒートマップ：DEN が予測した誤差。シアンの枠：現在のフレームから再開したタイル。赤い枠：シーンカットによるリセット。下のバーはフレームごとの再開タイルの割合を示します。</figcaption></figure>
-  <div class="feature"><div class="ft"><span class="num">02</span><h3>局所・大域の信頼性制御</h3>
+  <div class="feature after-vid"><div class="ft">
     <p>一貫したシーンでは、伝播した復元結果がコンパクトなモデルを強化するが、動く人物のような局所的な不整合や、照明変化・シーンカットのような大域的な不整合は、伝播されると誤差スパイクを引き起こす。そこで軽量な Dynamic Estimation Network（DEN）が、現在の LR 入力、ワープした直前の LR 入力、位置合わせした潜在表現から、位置合わせした潜在表現の復元誤差を予測する。</p>
     <ul><li>局所的には、予測誤差の低いタイルは位置合わせした復元結果を保持し、残りのタイルはバイキュービック拡大した観測を符号化したものから再始動する。両者は1回のノイズ除去ステップを共有するため、再始動によってデノイザの評価回数は増えない。</li><li>大域的には、信頼できないタイルがフレームの半分以上を占め、かつ LR の大域的な見た目の変化が検出されたときに、状態全体をリセットする。リセットは時間的条件とフローのウォームスタートも消去し、未来フレームを必要としない。</li><li>信頼性制御を無効にすると、29 件のカットにおける LPIPS が 0.0820 から 0.1088 に上昇する。したがって、この効果は全体リセットによるものである。</li></ul></div>
     <figure class="fig-wrap"><div class="fig"><a href="../assets/fig/den_motivation.webp?v=20261117f"><img src="../assets/fig/den_motivation.webp?v=20261117f" width="1600" height="679" loading="lazy" decoding="async" alt="信頼性制御の図解。局所的には、信頼できるタイルは位置合わせした復元結果を保持し、信頼できないタイルは現在の LR 観測から再始動する。大域的には、シーンカットで状態をリセットし、時間的条件を消去する。"></a></div>

@@ -27,7 +27,7 @@
 <!--/i18n-head-->
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237CB696'/%3E%3Cpath d='M23 11a9 9 0 1 0 1.6 7' fill='none' stroke='%2327323c' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='m25 6-1 6.6-6.4-1.6' fill='none' stroke='%2327323c' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script>try{var t=localStorage.getItem('dv-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
-<link rel="stylesheet" href="../assets/style.css?v=20261119d">
+<link rel="stylesheet" href="../assets/style.css?v=20261119f">
 <link rel="stylesheet" href="../assets/schematic.css?v=20261110c">
 <style>#race-chips{grid-column:1/-1;grid-template-columns:repeat(5,minmax(0,1fr));margin-top:0}@media (max-width:760px){#race-chips{grid-template-columns:repeat(2,minmax(0,1fr))}}.rp.oom .rv{opacity:.55}.race-ctl .seg+.seg{margin-left:4px}.note.illus{font-size:12px;text-align:center;margin:6px auto 10px;max-width:none}#race-cap{margin-top:4px;font-size:13px;color:var(--ink-2)}.seg[data-g=res] button,.seg[data-g=k] button{width:auto;min-width:44px;padding:0 9px}</style>
 </head>
@@ -132,9 +132,10 @@
     <figure class="fig-wrap"><div class="fig"><a href="../assets/fig/recurrent_refinement_schematic.webp?v=20261117f"><img src="../assets/fig/recurrent_refinement_schematic.webp?v=20261117f" width="1600" height="943" loading="lazy" decoding="async" alt="上：一段含兩次場景切換的膠卷，ReLoopVSR 使用自上次切換以來的目前與過去幀，而基於區塊的 DiT 則跨越切換緩衝 n 個未來幀。下：ReLoopVSR 以 LR 光流扭曲前一輸出，將對齊結果重新加噪，在一個蒸餾後的步驟中以目前的 LR 幀精煉，並將新輸出回饋作為循環精煉。"></a></div>
     <figcaption><b>串流輸入與循環精煉</b>（論文圖 2）。基於區塊的 DiT 方法會緩衝 <i>n</i> 個未來幀，增加延遲，並在切換處混入無關內容；ReLoopVSR 僅使用自上次切換以來的目前與過去幀，透過循環精煉以自迴歸方式累積時空動量。</figcaption></figure></div>
 
+  <div class="den-head"><span class="num">02</span><h3>局部與全域可靠性控制</h3></div>
   <figure class="fig-wrap den-vid"><div class="fig"><video class="autovid" muted loop playsinline preload="none" width="1600" height="666" poster="../media/poster/den_web.webp" data-src="../media/video/den_web.mp4" data-src-lite="media/video/den_web-lite.mp4" aria-label="DEN 視覺化：ReLoopVSR 輸出疊加 DEN 預測的誤差，重新開始的圖塊以青色框標出，場景切換以紅色標示；右側為輸入與 ReLoopVSR 輸出。"></video></div>
     <figcaption><b>可靠性控制實際運作。</b>熱度圖：DEN 預測的誤差；青色框：從當前幀重新開始的圖塊；紅色外框：場景切換重設。下方長條顯示每幀重新開始的圖塊比例。</figcaption></figure>
-  <div class="feature"><div class="ft"><span class="num">02</span><h3>局部與全域可靠性控制</h3>
+  <div class="feature after-vid"><div class="ft">
     <p>在一致的場景中，傳遞而來的還原結果能強化精簡的模型；但移動的人物等局部不一致，以及光照變化與場景切換等全域不一致，一旦被傳遞就會造成誤差尖峰。因此，一個輕量的動態估計網路（Dynamic Estimation Network，DEN）從目前的 LR 輸入、扭曲後的前一幀 LR 輸入與對齊後的潛在表示，預測對齊潛在表示的還原誤差。</p>
     <ul><li>在局部層面，預測誤差低的圖塊保留對齊後的還原結果，其餘圖塊則從編碼後的雙三次上取樣觀測重新開始。兩種來源共用同一個去噪步驟，因此重新開始不會增加去噪器的評估次數。</li><li>在全域層面，當不可靠圖塊覆蓋至少一半畫面且偵測到全域 LR 外觀變化時，整個狀態會重設。重設同時清除時間條件與光流的暖啟動，且不需要未來幀。</li><li>停用可靠性控制會使 29 個切換事件處的 LPIPS 從 0.0820 升至 0.1088，因此其效益來自完整重設。</li></ul></div>
     <figure class="fig-wrap"><div class="fig"><a href="../assets/fig/den_motivation.webp?v=20261117f"><img src="../assets/fig/den_motivation.webp?v=20261117f" width="1600" height="679" loading="lazy" decoding="async" alt="可靠性控制示意圖：在局部層面，可靠的圖塊保留對齊後的還原結果，不可靠的圖塊從目前的 LR 觀測重新開始；在全域層面，場景切換會重設狀態並清除時間條件。"></a></div>
