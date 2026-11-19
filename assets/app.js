@@ -333,3 +333,16 @@ makeTabs($('#show-tabs'),DSETS.map(function(n,i){return i?n:T('all','All')}),fun
   function legacy(){var a=el('textarea',{style:'position:fixed;opacity:0'});a.value=t;document.body.appendChild(a);a.select();var ok=false;try{ok=document.execCommand('copy')}catch(e){}a.remove();done(ok)}
   b.addEventListener('click',function(){if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(function(){done(true)},legacy);else legacy()})})();
 })();
+
+/* autoplaying looped figure videos: load when near the viewport (lite file on narrow screens), play only while visible */
+(function(){
+  var vs=Array.prototype.slice.call(document.querySelectorAll('video.autovid'));if(!vs.length)return;
+  var RM=matchMedia('(prefers-reduced-motion: reduce)');
+  function load(v){if(v.getAttribute('src'))return;var lite=v.getAttribute('data-src-lite');v.src=(lite&&window.innerWidth<700)?lite:v.getAttribute('data-src')}
+  vs.forEach(function(v){v.muted=true;if(RM.matches)v.controls=true});
+  if(!('IntersectionObserver' in window)){vs.forEach(function(v){load(v);if(!RM.matches)v.play().catch(function(){})});return}
+  var near=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){load(e.target);near.unobserve(e.target)}})},{rootMargin:'500px'});
+  var vis=new IntersectionObserver(function(es){es.forEach(function(e){var v=e.target;if(e.isIntersecting&&!RM.matches&&!document.hidden){load(v);v.play().catch(function(){})}else v.pause()})},{threshold:.25});
+  vs.forEach(function(v){near.observe(v);vis.observe(v)});
+  document.addEventListener('visibilitychange',function(){if(document.hidden)vs.forEach(function(v){v.pause()})});
+})();

@@ -197,7 +197,9 @@
     "Weights <small>coming soon</small>": "权重 <small>即将推出</small>",
     "Demo <small>coming soon</small>": "演示 <small>即将推出</small>",
     "Test material: REDS4, YouHQ40, the LongAIGC-8 videos and VideoLQ, as used in the paper, shown for research comparison. <i>Tears of Steel</i> (CC) Blender Foundation.": "测试素材：REDS4、YouHQ40、LongAIGC-8 视频和 VideoLQ，与论文中使用的相同，仅用于研究比较展示。<i>Tears of Steel</i> (CC) Blender Foundation。",
-    "Numbers come from the paper's tables. This page loads no external resources and collects no data. Fonts: Inter and JetBrains Mono, SIL Open Font License (see assets/fonts).": "数字均来自论文中的表格。本页面不加载任何外部资源，也不收集任何数据。字体：Inter 和 JetBrains Mono，SIL Open Font License（见 assets/fonts）。"
+    "Numbers come from the paper's tables. This page loads no external resources and collects no data. Fonts: Inter and JetBrains Mono, SIL Open Font License (see assets/fonts).": "数字均来自论文中的表格。本页面不加载任何外部资源，也不收集任何数据。字体：Inter 和 JetBrains Mono，SIL Open Font License（见 assets/fonts）。",
+    "<b>Reliability control in action.</b> Heat map: DEN predicted error; cyan boxes: tiles restarted from the current frame; red outline: scene-cut reset. The bar below shows the restarted share per frame.": "<b>可靠性控制实际运行。</b>热度图：DEN 预测的误差；青色框：从当前帧重新开始的图块；红色外框：场景切换重置。下方长条显示每帧重新开始的图块比例。",
+    "DEN visualization: ReLoopVSR output overlaid with the predicted error of DEN, restarted tiles outlined in cyan, and scene cuts marked in red; the input and the ReLoopVSR output are shown on the right.": "DEN 可视化：ReLoopVSR 输出叠加 DEN 预测的误差，重新开始的图块以青色框标出，场景切换以红色标示；右侧为输入与 ReLoopVSR 输出。"
   },
   "js": {
     "themeLight": "切换到浅色主题",

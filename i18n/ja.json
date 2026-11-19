@@ -197,7 +197,9 @@
     "Weights <small>coming soon</small>": "重み <small>近日公開</small>",
     "Demo <small>coming soon</small>": "デモ <small>近日公開</small>",
     "Test material: REDS4, YouHQ40, the LongAIGC-8 videos and VideoLQ, as used in the paper, shown for research comparison. <i>Tears of Steel</i> (CC) Blender Foundation.": "テスト素材：論文で用いた REDS4、YouHQ40、LongAIGC-8 の動画、VideoLQ を、研究上の比較のために表示している。<i>Tears of Steel</i> (CC) Blender Foundation。",
-    "Numbers come from the paper's tables. This page loads no external resources and collects no data. Fonts: Inter and JetBrains Mono, SIL Open Font License (see assets/fonts).": "数値は論文の表による。このページは外部リソースを読み込まず、データを収集しない。フォント：Inter と JetBrains Mono、SIL Open Font License（assets/fonts を参照）。"
+    "Numbers come from the paper's tables. This page loads no external resources and collects no data. Fonts: Inter and JetBrains Mono, SIL Open Font License (see assets/fonts).": "数値は論文の表による。このページは外部リソースを読み込まず、データを収集しない。フォント：Inter と JetBrains Mono、SIL Open Font License（assets/fonts を参照）。",
+    "<b>Reliability control in action.</b> Heat map: DEN predicted error; cyan boxes: tiles restarted from the current frame; red outline: scene-cut reset. The bar below shows the restarted share per frame.": "<b>信頼性制御の動作。</b>ヒートマップ：DEN が予測した誤差。シアンの枠：現在のフレームから再開したタイル。赤い枠：シーンカットによるリセット。下のバーはフレームごとの再開タイルの割合を示します。",
+    "DEN visualization: ReLoopVSR output overlaid with the predicted error of DEN, restarted tiles outlined in cyan, and scene cuts marked in red; the input and the ReLoopVSR output are shown on the right.": "DEN の可視化：ReLoopVSR の出力に DEN が予測した誤差を重ね、再開したタイルをシアンの枠で、シーンカットを赤で示しています。右側は入力と ReLoopVSR の出力です。"
   },
   "js": {
     "themeLight": "ライトテーマに切り替え",
